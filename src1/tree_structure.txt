@@ -1,0 +1,88 @@
+.
+├── app.module.ts
+├── app.service.ts
+├── core
+│   ├── config
+│   │   ├── configuration.module.ts
+│   │   └── configuration.ts
+│   ├── database
+│   │   └── database.module.ts
+│   ├── monitoring.service.ts
+│   └── security
+│       ├── security.module.ts
+│       └── security.service.ts
+├── main.ts
+├── modules
+│   ├── contentful
+│   │   ├── contentful.module.ts
+│   │   └── contentful.service.ts
+│   ├── health
+│   │   └── health.controller.ts
+│   ├── queue
+│   │   ├── queue.module.ts
+│   │   ├── queue.processor.ts
+│   │   └── queue.service.ts
+│   ├── redis
+│   │   ├── controller
+│   │   │   └── redis.controller.ts
+│   │   ├── redis.module.ts
+│   │   ├── redis.service.spec.ts
+│   │   └── redis.service.ts
+│   ├── shopify
+│   │   ├── controllers
+│   │   │   └── shopify-auth.controller.ts
+│   │   ├── decorators
+│   │   │   └── measure.decorator.ts
+│   │   ├── errors
+│   │   │   └── index.ts
+│   │   ├── graphql
+│   │   │   ├── custom-shopify-graphql.service.ts
+│   │   │   └── shopify-graphql.service.ts
+│   │   ├── handlers
+│   │   │   └── shopify-webhook.handler.ts
+│   │   ├── services
+│   │   │   ├── cache.service.ts
+│   │   │   ├── shopify-auth.service.ts
+│   │   │   ├── shopify-webhooks.service.ts
+│   │   │   ├── shopify.service.integration.spec.ts
+│   │   │   ├── shopify.service.spec.ts
+│   │   │   └── shopify.service.ts
+│   │   ├── shopify.module.ts
+│   │   └── webhooks
+│   │       ├── shopify.webhook.handler.ts
+│   │       └── webhook-processor.service.ts
+│   └── user
+│       ├── controllers
+│       │   └── user.controller.ts
+│       ├── dto
+│       │   ├── get-user.dto.ts
+│       │   └── update-user.dto.ts
+│       ├── entities
+│       │   └── user.entity.ts
+│       ├── services
+│       │   ├── user.service.spec.ts
+│       │   └── user.service.ts
+│       └── user.module.ts
+├── shared
+│   ├── common.module.ts
+│   ├── errors
+│   │   ├── conflict.error.ts
+│   │   ├── contentful-api.error.ts
+│   │   ├── product-not-found.error.ts
+│   │   ├── shopify-api.error.ts
+│   │   └── webhook-processing.errors.ts
+│   ├── filters
+│   │   ├── all-exceptions.filter.ts
+│   │   └── shopify-exception.filter.ts
+│   ├── guards
+│   │   └── csrf.guard.ts
+│   ├── interceptors
+│   │   ├── logging.interceptor.ts
+│   │   └── sentry.interceptor.ts
+│   ├── logger
+│   │   └── logger.service.ts
+│   └── services
+│       └── secret-manager.service.ts
+└── tree_structure.txt
+
+31 directories, 55 files

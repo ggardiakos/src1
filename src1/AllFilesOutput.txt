@@ -1,0 +1,3967 @@
+Objective: Refactor and optimize the existing Shopify-NestJS backend codebase to ensure it is built upon the nestjs-shopify library as the backbone for managing Shopify integrations. The project will use pnpm for efficient dependency management, and all features, including Datadog for monitoring and observability, will be integrated. The custom GraphQL import will be preserved, and security, performance, and maintainability will be enhanced.
+
+Detailed Steps:
+Initial Code Review:
+
+Conduct a thorough review of the existing codebase, focusing on features like Shopify API integrations, Redis caching, Contentful CMS, and background job processing.
+Ensure the custom GraphQL import is preserved and fully integrated with other parts of the refactored codebase.
+Identify the best points to integrate the nestjs-shopify library as the backbone for Shopify API interactions.
+Integrating nestjs-shopify as the Backbone:
+
+Replace any custom or redundant Shopify API logic with the nestjs-shopify library from the nestjs-shopify GitHub repository.
+Refactor the Shopify API interactions (both REST and GraphQL) to leverage the services and modules provided by nestjs-shopify.
+Ensure that the nestjs-shopify library handles all core Shopify operations such as managing products, collections, orders, and webhooks.
+Configure the nestjs-shopify library to handle OAuth, API rate limiting, and Shopify’s multi-shop management if applicable.
+pnpm Setup and Dependency Management:
+
+Replace existing package management with pnpm for improved performance and disk space efficiency.
+Migrate all dependencies using pnpm import and install them using pnpm install.
+Ensure pnpm is used consistently across all development and deployment environments, including CI/CD pipelines.
+Shopify API and GraphQL Integration:
+
+Leverage nestjs-shopify for both REST and GraphQL Shopify API interactions.
+Ensure all Shopify API calls respect rate limits and implement retry logic with exponential backoff for robust error handling.
+Use pnpm to manage any additional dependencies needed for Shopify GraphQL functionality.
+Contentful CMS Integration:
+
+Maintain integration with Contentful CMS, optimizing for efficient data synchronization and performance.
+Implement caching strategies (using Redis) to minimize redundant API calls and improve load times for frequently accessed content.
+Ensure seamless interaction between Contentful data and Shopify products (e.g., linking Contentful content to Shopify product descriptions).
+Redis Caching Optimization:
+
+Refactor the caching mechanism to ensure Redis is used effectively for caching frequently accessed Shopify and Contentful data.
+Implement cache invalidation strategies to keep cached data consistent with the source APIs.
+Ensure that Redis connections are pooled efficiently to handle high traffic scenarios.
+Background Job Processing with BullMQ:
+
+Refactor long-running tasks such as syncing Shopify products and orders using BullMQ for background processing.
+Implement job retries, delayed tasks, and error handling to ensure reliability in job execution.
+Use Redis for managing BullMQ job queues, ensuring scalability and performance.
+Mikro-ORM and Database Optimization:
+
+Ensure Mikro-ORM is correctly configured for PostgreSQL or MySQL, and refactor raw SQL queries into ORM-managed operations.
+Optimize database queries with pagination, indexing, and lazy loading to ensure efficient data handling for Shopify and Contentful data.
+Implement database migrations and ensure proper entity relationships in the ORM configuration.
+Datadog Integration for Monitoring:
+
+Integrate Datadog for real-time observability, monitoring the performance of the Shopify API, database operations, background jobs, and caching layers.
+Set up Datadog APM to trace requests and identify bottlenecks across the NestJS backend services, including Shopify API requests and GraphQL queries.
+Implement Datadog logs for structured logging, tracking key events such as Shopify API errors, BullMQ job failures, and Redis cache hits/misses.
+Configure Datadog dashboards for real-time metrics on Shopify integrations, job queues, and system health.
+Prometheus Monitoring for System Metrics:
+
+In addition to Datadog, ensure Prometheus is used to monitor system-level metrics such as CPU usage, memory consumption, and network traffic.
+Set up Grafana dashboards to visualize these metrics, providing insight into the system's overall health and performance.
+Configure Prometheus alerts for key performance thresholds and failure scenarios, integrating with Datadog for comprehensive observability.
+Winston Logging for Structured Logging:
+
+Refactor all existing logging to use Winston for structured and centralized logging across the NestJS backend.
+Ensure logs are well-structured, categorizing them by severity level (info, warn, error, debug).
+Use Winston transports to forward logs to Datadog or other logging services, ensuring centralized log management.
+Sentry Error Tracking:
+
+Integrate Sentry for proactive error monitoring, tracking performance issues and runtime exceptions across the Shopify-NestJS backend.
+Ensure Sentry captures context (stack traces, HTTP request data, etc.) for critical errors and provides real-time notifications of failures.
+Set up Sentry alerts for critical errors like Shopify API failures, database connectivity issues, or background job execution failures.
+Enhanced Security Features:
+
+Implement rate limiting on public-facing API and GraphQL endpoints to prevent abuse and ensure compliance with Shopify API rate limits.
+Secure sensitive information using environment variables, managed through NestJS ConfigService, and enforce HTTPS across all communications.
+Ensure that all inputs are validated (e.g., API calls, GraphQL queries) to mitigate the risk of SQL injection, XSS, or other vulnerabilities.
+Kubernetes-Ready Deployment:
+
+Ensure the backend is fully Kubernetes-ready, with all services (Shopify API, Redis, BullMQ, Contentful, Mikro-ORM) deployed in containers.
+Update Kubernetes deployment configurations to ensure that services can scale automatically based on demand using Horizontal Pod Autoscaler.
+Use pnpm to install dependencies in Docker containers efficiently, ensuring consistent builds across environments.
+Comprehensive Testing:
+
+Update existing tests and ensure full test coverage for Shopify API interactions, Contentful integration, Redis caching, and background job processing.
+Ensure unit tests, integration tests, and end-to-end (E2E) tests cover the refactored codebase, verifying interactions with nestjs-shopify and other core services.
+Use Jest for test execution and Supertest or Puppeteer for E2E testing, ensuring all critical workflows are thoroughly tested.
+Set up pnpm scripts to run all tests (pnpm test, pnpm test:e2e), integrating them into the CI pipeline for continuous validation.
+Outcome:
+The refactored and optimized Shopify-NestJS backend will:
+
+Use nestjs-shopify as the backbone for Shopify API integration, handling all key operations like managing products, orders, and collections.
+Utilize pnpm for efficient dependency management, ensuring fast and lean builds across environments.
+Provide comprehensive monitoring through Datadog for observability and Prometheus for system metrics, ensuring complete visibility into performance.
+Handle background job processing, caching, and data synchronization efficiently using BullMQ, Redis, and Mikro-ORM.
+Be Kubernetes-ready, easily scalable, and secured with rate-limiting, HTTPS, and environment variable management.
+Be fully tested and ready for production, with a robust CI/CD pipeline integrated with pnpm.
+
+======== File: C:\src\tree_structure.txt ========
+.
+├── app.module.ts
+├── app.service.ts
+├── core
+│   ├── config
+│   │   ├── configuration.module.ts
+│   │   └── configuration.ts
+│   ├── database
+│   │   └── database.module.ts
+│   ├── monitoring.service.ts
+│   └── security
+│       ├── security.module.ts
+│       └── security.service.ts
+├── main.ts
+├── modules
+│   ├── contentful
+│   │   ├── contentful.module.ts
+│   │   └── contentful.service.ts
+│   ├── health
+│   │   └── health.controller.ts
+│   ├── queue
+│   │   ├── queue.module.ts
+│   │   ├── queue.processor.ts
+│   │   └── queue.service.ts
+│   ├── redis
+│   │   ├── controller
+│   │   │   └── redis.controller.ts
+│   │   ├── redis.module.ts
+│   │   ├── redis.service.spec.ts
+│   │   └── redis.service.ts
+│   ├── shopify
+│   │   ├── controllers
+│   │   │   └── shopify-auth.controller.ts
+│   │   ├── decorators
+│   │   │   └── measure.decorator.ts
+│   │   ├── errors
+│   │   │   └── index.ts
+│   │   ├── graphql
+│   │   │   ├── custom-shopify-graphql.service.ts
+│   │   │   └── shopify-graphql.service.ts
+│   │   ├── handlers
+│   │   │   └── shopify-webhook.handler.ts
+│   │   ├── services
+│   │   │   ├── cache.service.ts
+│   │   │   ├── shopify-auth.service.ts
+│   │   │   ├── shopify-webhooks.service.ts
+│   │   │   ├── shopify.service.integration.spec.ts
+│   │   │   ├── shopify.service.spec.ts
+│   │   │   └── shopify.service.ts
+│   │   ├── shopify.module.ts
+│   │   └── webhooks
+│   │       ├── shopify.webhook.handler.ts
+│   │       └── webhook-processor.service.ts
+│   └── user
+│       ├── controllers
+│       │   └── user.controller.ts
+│       ├── dto
+│       │   ├── get-user.dto.ts
+│       │   └── update-user.dto.ts
+│       ├── entities
+│       │   └── user.entity.ts
+│       ├── services
+│       │   ├── user.service.spec.ts
+│       │   └── user.service.ts
+│       └── user.module.ts
+├── shared
+│   ├── common.module.ts
+│   ├── errors
+│   │   ├── conflict.error.ts
+│   │   ├── contentful-api.error.ts
+│   │   ├── product-not-found.error.ts
+│   │   ├── shopify-api.error.ts
+│   │   └── webhook-processing.errors.ts
+│   ├── filters
+│   │   ├── all-exceptions.filter.ts
+│   │   └── shopify-exception.filter.ts
+│   ├── guards
+│   │   └── csrf.guard.ts
+│   ├── interceptors
+│   │   ├── logging.interceptor.ts
+│   │   └── sentry.interceptor.ts
+│   ├── logger
+│   │   └── logger.service.ts
+│   └── services
+│       └── secret-manager.service.ts
+└── tree_structure.txt
+
+31 directories, 55 files
+======== File: C:\src\app.module.ts ========
+import { Module, ValidationPipe } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { WinstonModule } from 'nest-winston';
+import * as winston from 'winston';
+import { CacheModule } from '@nestjs/cache-manager';
+import * as redisStore from 'cache-manager-ioredis';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
+import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { TerminusModule } from '@nestjs/terminus';
+import { HttpModule } from '@nestjs/axios';  // <-- Add this import
+
+import { ShopifyCoreModule } from '@nestjs-shopify/core';
+import { ShopifyGraphQLModule } from '@nestjs-shopify/graphql';
+import { ShopifyAuthModule } from '@nestjs-shopify/auth';
+import { ShopifyModule } from '@nestjs-shopify/core';
+
+import configuration from './core/config/configuration';
+import { ContentfulModule } from './modules/contentful/contentful.module';
+import { QueueModule } from './modules/queue/queue.module';
+import { UserModule } from './modules/user/user.module';
+import { CommonModule } from './shared/common.module';
+import { RedisModule } from './modules/redis/redis.module';
+import { HealthModule } from './modules/health/health.module';
+
+import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
+import { AllExceptionsFilter } from './shared/filters/all-exceptions.filter';
+import { TimeoutInterceptor } from './shared/interceptors/timeout.interceptor';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      load: [configuration],
+      isGlobal: true,
+    }),
+    ShopifyCoreModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        shop: configService.get<string>('SHOPIFY_SHOP'),
+        accessToken: configService.get<string>('SHOPIFY_ACCESS_TOKEN'),
+      }),
+      inject: [ConfigService],
+    }),
+    ShopifyGraphQLModule,
+    ShopifyAuthModule.forRoot({
+      apiKey: process.env.SHOPIFY_API_KEY,
+      apiSecretKey: process.env.SHOPIFY_API_SECRET_KEY,
+      scopes: ['read_products', 'write_products'],
+      hostName: process.env.HOST_NAME,
+    }),
+    WinstonModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        transports: [
+          new winston.transports.Console({
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.ms(),
+              winston.format.colorize(),
+              winston.format.printf(({ timestamp, level, message, context, ms }) => {
+                return `${timestamp} [${level}] ${context ? `[${context}] ` : ''}${message} ${ms}`;
+              }),
+            ),
+          }),
+          new winston.transports.File({
+            filename: 'logs/error.log',
+            level: 'error',
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.json(),
+            ),
+          }),
+          new winston.transports.File({
+            filename: 'logs/combined.log',
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.json(),
+            ),
+          }),
+        ],
+        exceptionHandlers: [new winston.transports.File({ filename: 'logs/exceptions.log' })],
+      }),
+      inject: [ConfigService],
+    }),
+    CacheModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.get<string>('redis.host'),
+        port: configService.get<number>('redis.port'),
+        password: configService.get<string>('redis.password'),
+        ttl: configService.get<number>('cache.ttl', 300),
+        max: configService.get<number>('cache.max', 100),
+      }),
+      inject: [ConfigService],
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('database.host'),
+        port: configService.get<number>('database.port'),
+        username: configService.get<string>('database.username'),
+        password: configService.get<string>('database.password'),
+        database: configService.get<string>('database.name'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        synchronize: configService.get<boolean>('database.synchronize', false),
+        logging: configService.get<boolean>('database.logging', false),
+        ssl: configService.get<boolean>('database.ssl', false) ? { rejectUnauthorized: false } : false,
+      }),
+      inject: [ConfigService],
+    }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        redis: {
+          host: configService.get<string>('redis.host'),
+          port: configService.get<number>('redis.port'),
+          password: configService.get<string>('redis.password'),
+        },
+        defaultJobOptions: {
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        ttl: configService.get<number>('throttle.ttl', 60),
+        limit: configService.get<number>('throttle.limit', 100),
+      }),
+      inject: [ConfigService],
+    }),
+    PrometheusModule.register({
+      defaultMetrics: {
+        enabled: true,
+      },
+      path: '/metrics',
+      port: 3001,
+    }),
+    HttpModule, // <-- Add HttpModule here
+    TerminusModule,
+    CommonModule,
+    ShopifyModule.forRootAsync({
+      useFactory: (configService: ConfigService) => ({
+        apiKey: configService.get<string>('SHOPIFY_API_KEY'),
+        apiSecretKey: configService.get<string>('SHOPIFY_API_SECRET_KEY'),
+        scopes: ['read_products', 'write_products'],
+        hostName: configService.get<string>('HOST_NAME'),
+      }),
+      inject: [ConfigService],
+    }),
+    ContentfulModule,
+    QueueModule,
+    UserModule,
+    RedisModule,
+    HealthModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TimeoutInterceptor,
+      multi: true,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_PIPE,
+      useFactory: () =>
+        new ValidationPipe({
+          whitelist: true,
+          transform: true,
+          forbidNonWhitelisted: true,
+          transformOptions: {
+            enableImplicitConversion: true,
+          },
+        }),
+    },
+  ],
+})
+export class AppModule {}
+
+======== File: C:\src\app.service.ts ========
+import { Injectable, Inject, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { ShopifyService } from '@nestjs-shopify/core';
+import DataLoader from 'dataloader';
+import { Product, CreateProductInput, UpdateProductInput } from '@nestjs-shopify/core';
+import { ShopifyAPIError, ProductNotFoundError } from '../shopify.errors';
+
+@Injectable()
+export class ShopifyProductService {
+  private productLoader: DataLoader<string, Product | null>;
+  private readonly logger = new Logger(ShopifyProductService.name);
+
+  constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly shopifyService: ShopifyService,
+    private readonly configService: ConfigService,
+  ) {
+    this.initializeProductLoader();
+  }
+
+  /**
+   * Initialize the DataLoader for batching and caching product requests.
+   */
+  private initializeProductLoader() {
+    this.productLoader = new DataLoader<string, Product | null>(
+      async (ids: string[]) => {
+        const query = `
+        query($ids: [ID!]!) {
+          nodes(ids: $ids) {
+            ... on Product {
+              id
+              title
+              description
+              variants(first: 5) {
+                edges {
+                  node {
+                    id
+                    title
+                    price
+                    inventoryQuantity
+                  }
+                }
+              }
+              images(first: 5) {
+                edges {
+                  node {
+                    id
+                    src
+                    altText
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+        const variables = { ids };
+
+        try {
+          const products = await this.shopifyService.getProductsByIds(ids);
+          const productsMap = new Map(
+            products.map((product) => [product.id, product] as [string, Product | null]),
+          );
+          return ids.map((id) => productsMap.get(id) || null);
+        } catch (error) {
+          this.logger.error('Failed to load products', {
+            error: error.message,
+            ids,
+          });
+          throw new ShopifyAPIError(`Failed to load products: ${error.message}`);
+        }
+      },
+    );
+  }
+
+  /**
+   * Get product by its ID with caching. Uses DataLoader to batch requests.
+   * @param id Product ID
+   */
+  async getProductById(id: string): Promise<Product> {
+    const cacheKey = `product:${id}`;
+    try {
+      const cachedProduct = await this.cacheManager.get<Product>(cacheKey);
+      if (cachedProduct) {
+        this.logger.debug('Cache hit for product', { productId: id });
+        return cachedProduct;
+      }
+
+      this.logger.debug('Cache miss for product, fetching from Shopify', {
+        productId: id,
+      });
+      const product = await this.shopifyService.getProduct(id);
+
+      if (!product) {
+        this.logger.warn('Product not found', { productId: id });
+        throw new ProductNotFoundError(id);
+      }
+
+      await this.cacheManager.set(cacheKey, product, {
+        ttl: this.configService.get<number>('PRODUCT_CACHE_TTL', 3600),
+      });
+      return product;
+    } catch (error) {
+      if (error instanceof ProductNotFoundError) {
+        throw error;
+      }
+      this.logger.error('Failed to get product', {
+        error: error.message,
+        productId: id,
+      });
+      throw new ShopifyAPIError(`Failed to get product: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create a new product using Shopify GraphQL mutation.
+   * @param input CreateProductInput data for the new product
+   */
+  async createProduct(input: CreateProductInput): Promise<Product> {
+    const mutation = `
+      mutation($input: ProductInput!) {
+        productCreate(input: $input) {
+          product {
+            id
+            title
+            description
+            variants(first: 5) {
+              edges {
+                node {
+                  id
+                  title
+                  price
+                  inventoryQuantity
+                }
+              }
+            }
+            images(first: 5) {
+              edges {
+                node {
+                  id
+                  src
+                  altText
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const variables = { input };
+
+    try {
+      this.logger.info('Creating new product', { input });
+      const createdProduct = await this.shopifyService.createProduct(input);
+
+      this.logger.info('Product created successfully', {
+        productId: createdProduct.id,
+      });
+
+      await this.cacheManager.del(`product:${createdProduct.id}`);
+
+      return createdProduct;
+    } catch (error) {
+      this.logger.error('Failed to create product', {
+        error: error.message,
+        input,
+      });
+      throw new ShopifyAPIError(`Failed to create product: ${error.message}`);
+    }
+  }
+
+  /**
+   * Update an existing product.
+   * @param input UpdateProductInput data to update the product
+   */
+  async updateProduct(input: UpdateProductInput): Promise<Product> {
+    // Implement product update logic
+  }
+
+  /**
+   * Delete a product by ID.
+   * @param id Product ID to delete
+   */
+  async deleteProduct(id: string): Promise<void> {
+    // Implement product delete logic
+  }
+
+  /**
+   * Compare multiple products.
+   * @param ids Array of product IDs to compare
+   */
+  async compareProducts(ids: string[]): Promise<Product[]> {
+    // Implement product comparison logic
+  }
+}
+
+
+======== File: C:\src\main.ts ========
+import { NestFactory } from '@nestjs/core';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
+import { ConfigService } from '@nestjs/config';
+import { Logger, ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as Sentry from '@sentry/node';
+import CircuitBreaker from 'opossum';
+
+import { AppModule } from './app.module';
+import { LoggingInterceptor } from './shared/interceptors/logging.interceptor';
+import { AllExceptionsFilter } from './shared/filters/all-exceptions.filter';
+import { SentryInterceptor } from './shared/interceptors/sentry.interceptor';
+
+import fastifyHelmet from '@fastify/helmet';
+import fastifyCompress from '@fastify/compress';
+import fastifyCors from '@fastify/cors';
+import fastifyRateLimit from '@fastify/rate-limit';
+
+import { TerminusModule } from '@nestjs/terminus';
+
+  // Capture raw body for potential use in webhooks or signatures
+  adapter.getInstance().addContentTypeParser(
+    '*',
+    { parseAs: 'buffer' },
+    (req: any, body: Buffer, done: (error: Error | null, body?: any) => void) => {
+      req.rawBody = body.toString('utf8');
+      done(null, body);
+    },
+  );
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
+
+  // Initialize Sentry
+  await initializeSentry(app, configService);
+
+  // Apply global configurations
+  applyGlobalConfigurations(app);
+
+  // Register middlewares for security and optimization
+  await registerMiddlewares(app, configService);
+
+  // Set up Circuit Breaker with opossum
+  setupCircuitBreaker();
+
+  // Set up Swagger if not in production
+  if (configService.get<string>('nodeEnv') !== 'production') {
+    setupSwagger(app);
+  }
+
+  // Set up health checks
+  setupHealthChecks(app);
+
+  // Trust proxy settings (useful when behind a reverse proxy)
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
+  // Enable shutdown hooks for graceful shutdown
+  app.enableShutdownHooks();
+
+  // Start the server
+  await startServer(app, configService);
+}
+
+async function initializeSentry(
+  app: NestFastifyApplication,
+  configService: ConfigService,
+) {
+  const sentryDsn = configService.get<string>('sentryDsn');
+  if (sentryDsn) {
+    Sentry.init({
+      dsn: sentryDsn,
+      environment: configService.get<string>('nodeEnv'),
+      tracesSampleRate: 1.0,
+    });
+    app.useGlobalInterceptors(new SentryInterceptor());
+    Logger.log('Sentry initialized for error tracking');
+  }
+}
+
+function applyGlobalConfigurations(app: NestFastifyApplication) {
+  app.useGlobalInterceptors(new LoggingInterceptor());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+  app.useGlobalFilters(new AllExceptionsFilter());
+  Logger.log('Global interceptors, pipes, and filters applied');
+}
+
+async function registerMiddlewares(
+  app: NestFastifyApplication,
+  configService: ConfigService,
+) {
+  await app.register(fastifyCors, {
+    origin: (origin, cb) => {
+      const allowedOrigins = configService
+        .get<string>('allowedOrigins')
+        ?.split(',') || [];
+      if (!origin || allowedOrigins.includes(origin)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Not allowed by CORS'), false);
+      }
+    },
+  });
+  await app.register(fastifyHelmet);
+  await app.register(fastifyCompress);
+  await app.register(fastifyRateLimit, {
+    max: 100,
+    timeWindow: '1 minute',
+  });
+  Logger.log('Security and optimization middlewares registered');
+}
+
+function setupCircuitBreaker() {
+  const options = {
+    timeout: 5000, // 5 seconds timeout
+    errorThresholdPercentage: 50, // 50% of errors will trigger the circuit breaker
+    resetTimeout: 30000, // After 30 seconds, try again
+  };
+
+  const breaker = new CircuitBreaker(asyncFunction, options);
+  breaker.on('open', () => Logger.warn('Circuit breaker opened'));
+  breaker.on('close', () => Logger.log('Circuit breaker closed'));
+
+  Logger.log('Circuit breaker setup with opossum');
+}
+
+async function asyncFunction() {
+  return await new Promise((resolve) => {
+    setTimeout(() => resolve('Success'), 1000);
+  });
+}
+
+function setupSwagger(app: NestFastifyApplication) {
+  const config = new DocumentBuilder()
+    .setTitle('Your API Title')
+    .setDescription('Comprehensive API documentation')
+    .setVersion('1.0')
+    .addTag('users')
+    .addTag('shopify')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+  Logger.log('Swagger documentation set up at /api/docs');
+}
+
+function setupHealthChecks(app: NestFastifyApplication) {
+  // Removed incorrect TerminusModule.forRoot({})
+  // Health checks are now handled within HealthModule
+  Logger.log('Health check endpoint is managed by HealthModule');
+}
+
+async function startServer(
+  app: NestFastifyApplication,
+  configService: ConfigService,
+) {
+  const port = configService.get<number>('port') || 3000;
+  await app.listen(port, '0.0.0.0');
+  const url = await app.getUrl();
+  Logger.log(`🚀 Application is running on: ${url}`);
+  if (configService.get<string>('nodeEnv') !== 'production') {
+    Logger.log(`📚 Swagger docs available at: ${url}/api/docs`);
+  }
+}
+
+bootstrap().catch((error) => {
+  Logger.error('Failed to start the application', error);
+  process.exit(1);
+});
+
+
+
+======== File: C:\src\core\monitoring.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import { CircuitBreaker, CircuitBreakerOptions } from '@nestjs/circuit-breaker';
+import { ShopifyMonitoringService } from '@nestjs-shopify/monitoring'; // Ensure correct import
+import { ShopifyConnector } from '@nestjs-shopify/core';
+
+const MONITORING_SERVICE_CIRCUIT_BREAKER_CONFIG: CircuitBreakerOptions = {
+  failureThreshold: 3,
+  successThreshold: 2,
+  timeout: 5000,
+  resetTimeout: 30000,
+};
+
+@Injectable()
+export class MonitoringService {
+  constructor(private readonly shopifyMonitoringService: ShopifyMonitoringService, private readonly shopifyConnector: ShopifyConnector) {
+    // Initialize or configure monitoring as needed
+  }
+
+  private readonly logger = new Logger(MonitoringService.name);
+
+  @CircuitBreaker(MONITORING_SERVICE_CIRCUIT_BREAKER_CONFIG)
+  async logEvent(
+    eventName: string,
+    metadata: Record<string, any>,
+  ): Promise<void> {
+    this.logger.log(`Event: ${eventName}`, metadata);
+    // Here you might send this log to an external logging service
+  }
+
+  @CircuitBreaker(MONITORING_SERVICE_CIRCUIT_BREAKER_CONFIG)
+  async recordMetric(metricName: string, value: number): Promise<void> {
+    this.logger.log(`Metric: ${metricName} = ${value}`);
+    // Here you might send this metric to a time-series database or monitoring service
+  }
+
+  @CircuitBreaker(MONITORING_SERVICE_CIRCUIT_BREAKER_CONFIG)
+  async checkHealth(): Promise<{
+    status: string;
+    checks: Record<string, { status: string }>;
+  }> {
+    // Perform various health checks here
+    const databaseStatus = await this.checkDatabaseConnection();
+    const cacheStatus = await this.checkCacheConnection();
+
+    return {
+      status: databaseStatus && cacheStatus ? 'healthy' : 'unhealthy',
+      checks: {
+        database: { status: databaseStatus ? 'up' : 'down' },
+        cache: { status: cacheStatus ? 'up' : 'down' },
+      },
+    };
+  }
+
+  private async checkDatabaseConnection(): Promise<boolean> {
+    // Implement actual database connection check
+    return true; // Placeholder
+  }
+
+  private async checkCacheConnection(): Promise<boolean> {
+    // Implement actual cache connection check
+    return true; // Placeholder
+  }
+
+  @CircuitBreaker(MONITORING_SERVICE_CIRCUIT_BREAKER_CONFIG)
+  async trackError(error: Error): Promise<void> {
+    this.logger.error('Application error', error.stack);
+    // Here you might send this error to an error tracking service
+  }
+}
+
+======== File: C:\src\core\config\configuration.module.ts ========
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { WinstonModule } from 'nest-winston';
+import { CacheModule } from '@nestjs/cache-manager';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BullModule } from '@nestjs/bull';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import * as winston from 'winston';
+import * as redisStore from 'cache-manager-ioredis';
+import configuration from './configuration';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      load: [configuration],
+      isGlobal: true,
+    }),
+    WinstonModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        transports: [
+          new winston.transports.Console({
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.ms(),
+              winston.format.colorize(),
+              winston.format.printf(
+                ({ timestamp, level, message, context, ms }) => {
+                  return `${timestamp} [${level}] ${context ? `[${context}] ` : ''}${message} ${ms}`;
+                },
+              ),
+            ),
+          }),
+          new winston.transports.File({
+            filename: 'logs/error.log',
+            level: 'error',
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.json(),
+            ),
+          }),
+          new winston.transports.File({
+            filename: 'logs/combined.log',
+            format: winston.format.combine(
+              winston.format.timestamp(),
+              winston.format.json(),
+            ),
+          }),
+        ],
+        exceptionHandlers: [
+          new winston.transports.File({ filename: 'logs/exceptions.log' }),
+        ],
+      }),
+      inject: [ConfigService],
+    }),
+    CacheModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.get<string>('redis.host'),
+        port: configService.get<number>('redis.port'),
+        password: configService.get<string>('redis.password'),
+        ttl: configService.get<number>('cache.ttl'),
+        max: configService.get<number>('cache.max'),
+      }),
+      inject: [ConfigService],
+    }),
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('database.host'),
+        port: configService.get<number>('database.port'),
+        username: configService.get<string>('database.username'),
+        password: configService.get<string>('database.password'),
+        database: configService.get<string>('database.name'),
+        entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+        synchronize: configService.get<boolean>('database.synchronize'),
+        logging: configService.get<boolean>('database.logging'),
+        ssl: configService.get<boolean>('database.ssl')
+          ? { rejectUnauthorized: false }
+          : false,
+      }),
+      inject: [ConfigService],
+    }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        redis: {
+          host: configService.get<string>('redis.host'),
+          port: configService.get<number>('redis.port'),
+          password: configService.get<string>('redis.password'),
+        },
+        defaultJobOptions: {
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        ttl: configService.get<number>('throttle.ttl'),
+        limit: configService.get<number>('throttle.limit'),
+      }),
+      inject: [ConfigService],
+    }),
+    PrometheusModule.register({
+      defaultMetrics: {
+        enabled: true,
+      },
+      path: '/metrics',
+      port: 3001,
+    }),
+  ],
+  exports: [
+    ConfigModule,
+    WinstonModule,
+    CacheModule,
+    TypeOrmModule,
+    BullModule,
+    ThrottlerModule,
+    PrometheusModule,
+  ],
+})
+export class ConfigurationModule {}
+
+======== File: C:\src\core\config\configuration.ts ========
+export default () => ({
+  port: parseInt(process.env.PORT, 10) || 3000,
+  nodeEnv: process.env.NODE_ENV || 'development',
+
+  database: {
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT, 10) || 5432,
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    name: process.env.DB_NAME,
+    synchronize: process.env.DB_SYNCHRONIZE === 'true',
+    logging: process.env.DB_LOGGING === 'true',
+    ssl: process.env.DB_SSL === 'true',
+  },
+
+  redis: {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+    password: process.env.REDIS_PASSWORD || '',
+  },
+
+  cache: {
+    ttl: parseInt(process.env.CACHE_TTL, 10) || 300,
+    max: parseInt(process.env.CACHE_MAX, 10) || 100,
+  },
+
+  throttle: {
+    ttl: parseInt(process.env.THROTTLE_TTL, 10) || 60,
+    limit: parseInt(process.env.THROTTLE_LIMIT, 10) || 100,
+  },
+
+  shopify: {
+    apiKey: process.env.SHOPIFY_API_KEY,
+    apiSecret: process.env.SHOPIFY_API_SECRET_KEY,
+    scopes: process.env.SHOPIFY_API_SCOPES?.split(',') || [],
+    hostName: process.env.SHOPIFY_HOST_NAME,
+    apiVersion: process.env.SHOPIFY_API_VERSION || '2023-10',
+    isEmbedded: process.env.SHOPIFY_IS_EMBEDDED_APP === 'true',
+    webhookPath: process.env.SHOPIFY_WEBHOOK_PATH || '/webhooks',
+  },
+
+  contentful: {
+    spaceId: process.env.CONTENTFUL_SPACE_ID,
+    accessToken: process.env.CONTENTFUL_ACCESS_TOKEN,
+    environment: process.env.CONTENTFUL_ENVIRONMENT || 'master',
+    cacheTtl: parseInt(process.env.CONTENTFUL_CACHE_TTL, 10) || 900,
+    cacheMaxItems: parseInt(process.env.CONTENTFUL_CACHE_MAX_ITEMS, 10) || 100,
+  },
+
+  bull: {
+    queueName: process.env.QUEUE_NAME || 'my-queue',
+    retryAttempts: parseInt(process.env.QUEUE_RETRY_ATTEMPTS, 10) || 3,
+    retryDelay: parseInt(process.env.QUEUE_RETRY_BACKOFF_DELAY, 10) || 1000,
+  },
+
+  sentryDsn: process.env.SENTRY_DSN || '',
+  allowedOrigins: process.env.ALLOWED_ORIGINS || '*',
+});
+
+======== File: C:\src\core\database\database.module.ts ========
+import { Module } from '@nestjs/common';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { ShopifyDatabaseModule } from '@nestjs-shopify/database'; // Ensure correct import
+
+@Module({
+  imports: [
+    MikroOrmModule.forRoot(),
+    ShopifyDatabaseModule.forRoot({
+      // Your Shopify-specific database configurations
+    }),
+  ],
+})
+export class DatabaseModule {}
+
+======== File: C:\src\core\security\security.module.ts ========
+import { Module } from '@nestjs/common';
+import { SecurityService } from './security.service';
+
+@Module({
+  providers: [SecurityService],
+  exports: [SecurityService],
+})
+export class SecurityModule {}
+
+======== File: C:\src\core\security\security.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import { CircuitBreaker, CircuitBreakerOptions } from '@nestjs/circuit-breaker';
+
+const SECURITY_SERVICE_CIRCUIT_BREAKER_CONFIG: CircuitBreakerOptions = {
+  failureThreshold: 3,
+  successThreshold: 2,
+  timeout: 5000,
+  resetTimeout: 20000,
+};
+
+@Injectable()
+export class SecurityService {
+  private readonly logger = new Logger(SecurityService.name);
+
+  @CircuitBreaker(SECURITY_SERVICE_CIRCUIT_BREAKER_CONFIG)
+  async validateToken(token: string): Promise<boolean> {
+    // Implement token validation logic here
+    this.logger.log('Validating token');
+    // For example purposes, let's just return true
+    return true;
+  }
+
+  @CircuitBreaker(SECURITY_SERVICE_CIRCUIT_BREAKER_CONFIG)
+  async generateToken(userId: string): Promise<string> {
+    // Implement token generation logic here
+    this.logger.log(`Generating token for user: ${userId}`);
+    // For example purposes, let's just return a dummy token
+    return `dummy_token_${userId}`;
+  }
+
+  // Add more security-related methods as needed
+}
+
+======== File: C:\src\modules\contentful\contentful.module.ts ========
+import { Module } from '@nestjs/common';
+import { ContentfulService } from './contentful.service';
+import { ConfigService, ConfigModule } from '@nestjs/config';
+import { CacheModule, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject } from '@nestjs/common';
+import { Logger } from 'winston';
+
+@Module({
+  imports: [ConfigModule, CacheModule],
+  providers: [ContentfulService],
+  exports: [ContentfulService],
+})
+export class ContentfulModule {}
+
+======== File: C:\src\modules\contentful\contentful.service.ts ========
+import { Injectable, Inject, Logger, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { createClient, ContentfulClientApi, Entry } from 'contentful';
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
+import { InjectCache } from '@nestjs/cache-manager';
+import { retry } from 'ts-retry-promise';
+import * as Sentry from '@sentry/node';
+import {
+  Product,
+  Collection,
+  Order,
+  ProductComparison,
+  CustomizationOption,
+  CustomizedProduct,
+} from '../shopify/graphql/schemas';
+import {
+  CreateProductInput,
+  UpdateProductInput,
+  CreateCollectionInput,
+  OrderItemInput,
+  CustomizeProductInput,
+} from '../shopify/dto/create-product.input';
+import { ShopifyAPIError } from '../common/errors/shopify-api.error';
+import { ProductNotFoundError } from '../common/errorrs/product-not-found.error';
+
+@Injectable()
+export class ContentfulService implements OnModuleInit {
+  private readonly logger = new Logger(ContentfulService.name);
+  private client: ContentfulClientApi;
+
+  constructor(
+    private readonly configService: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
+
+  async onModuleInit() {
+    this.client = createClient({
+      space: this.configService.get<string>('contentful.spaceId'),
+      accessToken: this.configService.get<string>('contentful.accessToken'),
+      environment: this.configService.get<string>('contentful.environment'),
+    });
+    this.logger.log('ContentfulService initialized');
+  }
+
+  async getProducts(): Promise<Product[]> {
+    const cacheKey = 'contentful_all_products';
+    const cachedProducts: Product[] = await this.cacheManager.get(cacheKey);
+    if (cachedProducts) {
+      this.logger.debug('Cache hit for all Contentful products');
+      return cachedProducts;
+    }
+
+    try {
+      const entries = await retry(
+        () => this.client.getEntries<Product>({ content_type: 'product' }),
+        {
+          maxAttempts: 3,
+          delay: 1000,
+          factor: 2,
+          onError: (error, attempt) => {
+            this.logger.warn(
+              `Contentful getProducts attempt ${attempt} failed: ${error.message}`,
+            );
+            Sentry.captureException(error);
+          },
+        },
+      );
+      const products = entries.items.map((item) =>
+        this.mapContentfulProduct(item),
+      );
+      await this.cacheManager.set(cacheKey, products, {
+        ttl: this.configService.get<number>('contentful.cacheTtl'),
+      });
+      this.logger.info(
+        `Fetched and cached ${products.length} products from Contentful`,
+      );
+      return products;
+    } catch (error) {
+      this.logger.error(
+        `Error fetching products from Contentful: ${error.message}`,
+      );
+      Sentry.captureException(error);
+      throw new ShopifyAPIError('Failed to fetch products from Contentful');
+    }
+  }
+
+  async getProductById(id: string): Promise<Product> {
+    const cacheKey = `contentful_product:${id}`;
+    const cachedProduct: Product = await this.cacheManager.get(cacheKey);
+    if (cachedProduct) {
+      this.logger.debug(`Cache hit for Contentful product ${id}`);
+      return cachedProduct;
+    }
+
+    try {
+      const entry: Entry<Product> = await retry(
+        () => this.client.getEntry<Product>(id),
+        {
+          maxAttempts: 3,
+          delay: 1000,
+          factor: 2,
+          onError: (error, attempt) => {
+            this.logger.warn(
+              `Contentful getProductById attempt ${attempt} failed: ${error.message}`,
+            );
+            Sentry.captureException(error);
+          },
+        },
+      );
+      const product = this.mapContentfulProduct(entry);
+      await this.cacheManager.set(cacheKey, product, {
+        ttl: this.configService.get<number>('contentful.cacheTtl'),
+      });
+      this.logger.debug(`Fetched and cached Contentful product ${id}`);
+      return product;
+    } catch (error) {
+      this.logger.error(
+        `Error fetching product ${id} from Contentful: ${error.message}`,
+      );
+      Sentry.captureException(error);
+      throw new ProductNotFoundError(id);
+    }
+  }
+
+  async createProduct(input: CreateProductInput): Promise<Product> {
+    try {
+      const entry = await retry(
+        () =>
+          this.client.createEntry<Product>('product', {
+            fields: {
+              title: { 'en-US': input.title },
+              description: { 'en-US': input.description },
+              // Add other fields as necessary
+            },
+          }),
+        {
+          maxAttempts: 3,
+          delay: 1000,
+          factor: 2,
+          onError: (error, attempt) => {
+            this.logger.warn(
+              `Contentful createProduct attempt ${attempt} failed: ${error.message}`,
+            );
+            Sentry.captureException(error);
+          },
+        },
+      );
+      const product = this.mapContentfulProduct(entry);
+      this.logger.info(`Created Contentful product ${product.id}`);
+      return product;
+    } catch (error) {
+      this.logger.error(
+        `Error creating product in Contentful: ${error.message}`,
+      );
+      Sentry.captureException(error);
+      throw new ShopifyAPIError('Failed to create product in Contentful');
+    }
+  }
+
+  async updateProduct(input: UpdateProductInput): Promise<Product> {
+    try {
+      const entry = await retry(
+        () =>
+          this.client.updateEntry<Product>(input.id, {
+            fields: {
+              title: { 'en-US': input.title },
+              description: { 'en-US': input.description },
+              // Update other fields as necessary
+            },
+          }),
+        {
+          maxAttempts: 3,
+          delay: 1000,
+          factor: 2,
+          onError: (error, attempt) => {
+            this.logger.warn(
+              `Contentful updateProduct attempt ${attempt} failed: ${error.message}`,
+            );
+            Sentry.captureException(error);
+          },
+        },
+      );
+      const updatedProduct = this.mapContentfulProduct(entry);
+      await this.cacheManager.del(`contentful_product:${updatedProduct.id}`);
+      this.logger.info(`Updated Contentful product ${updatedProduct.id}`);
+      return updatedProduct;
+    } catch (error) {
+      this.logger.error(
+        `Error updating product ${input.id} in Contentful: ${error.message}`,
+      );
+      Sentry.captureException(error);
+      throw new ShopifyAPIError(
+        `Failed to update product ${input.id} in Contentful`,
+      );
+    }
+  }
+
+  async deleteProduct(id: string): Promise<void> {
+    try {
+      await retry(() => this.client.deleteEntry(id), {
+        maxAttempts: 3,
+        delay: 1000,
+        factor: 2,
+        onError: (error, attempt) => {
+          this.logger.warn(
+            `Contentful deleteProduct attempt ${attempt} failed: ${error.message}`,
+          );
+          Sentry.captureException(error);
+        },
+      });
+      await this.cacheManager.del(`contentful_product:${id}`);
+      this.logger.info(`Deleted Contentful product ${id}`);
+    } catch (error) {
+      this.logger.error(
+        `Error deleting product ${id} from Contentful: ${error.message}`,
+      );
+      Sentry.captureException(error);
+      throw new ShopifyAPIError(
+        `Failed to delete product ${id} from Contentful`,
+      );
+    }
+  }
+
+  // Helper method to map Contentful entry to Product interface
+  private mapContentfulProduct(entry: Entry<any>): Product {
+    return {
+      id: entry.sys.id,
+      title: entry.fields.title['en-US'],
+      description: entry.fields.description['en-US'],
+      // Map other fields as necessary
+    };
+  }
+}
+
+======== File: C:\src\modules\health\health.controller.ts ========
+import { Controller, Get } from '@nestjs/common';
+import { CircuitBreaker } from '@nestjs/circuit-breaker';
+import {
+  HealthCheckService,
+  HttpHealthIndicator,
+  TypeOrmHealthIndicator,
+  HealthCheck,
+  MemoryHealthIndicator,
+  RedisHealthIndicator, // Import Redis health indicator from terminus
+} from '@nestjs/terminus';
+
+@Controller('health')
+export class HealthController {
+  constructor(
+    private health: HealthCheckService,
+    private http: HttpHealthIndicator,
+    private db: TypeOrmHealthIndicator,
+    private memory: MemoryHealthIndicator,
+    private redisHealth: RedisHealthIndicator, // Inject Redis health indicator
+  ) {}
+
+  @Get()
+  @HealthCheck()
+  @CircuitBreaker({
+    failureThreshold: 3,
+    successThreshold: 2,
+    timeout: 10000,
+  })
+  check() {
+    return this.health.check([
+      // Database health check
+      () => this.db.pingCheck('database'),
+
+      // Redis health check using the built-in RedisHealthIndicator
+      () => this.redisHealth.pingCheck('redis'),
+
+      // Memory usage check
+      () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024), // 150MB
+
+      // External API health checks (adjust URLs as needed)
+      () => this.http.pingCheck('nestjs-docs', 'https://docs.nestjs.com'),
+      () => this.http.pingCheck('shopify-api', 'https://shopify.dev/'),
+
+      // Add more checks as needed
+    ]);
+  }
+}
+
+======== File: C:\src\modules\queue\queue.module.ts ========
+import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bull';
+import { QueueProcessor } from './queue.processor';
+import { QueueService } from './queue.service';
+import { ConfigService, ConfigModule } from '@nestjs/config';
+
+@Module({
+  imports: [
+    BullModule.registerQueueAsync({
+      name: 'my-queue',
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        redis: {
+          host: configService.get<string>('redis.host'),
+          port: configService.get<number>('redis.port'),
+          password: configService.get<string>('redis.password') || undefined,
+        },
+        defaultJobOptions: {
+          attempts: configService.get<number>('bull.retryAttempts'),
+          backoff: {
+            type: 'exponential',
+            delay: configService.get<number>('bull.retryDelay'),
+          },
+        },
+      }),
+      inject: [ConfigService],
+    }),
+  ],
+  providers: [QueueProcessor, QueueService],
+  exports: [QueueService],
+})
+export class QueueModule {}
+
+======== File: C:\src\modules\queue\queue.processor.ts ========
+import { Processor, Process } from '@nestjs/bull';
+import { Job } from 'bull';
+import { Injectable, Logger } from '@nestjs/common';
+
+export interface ProcessTaskData {
+  type: string;
+  payload: any;
+}
+
+@Injectable()
+@Processor('my-queue')
+export class QueueProcessor {
+  private readonly logger = new Logger(QueueProcessor.name);
+
+  @Process('processTask')
+  async handleProcessTask(job: Job<ProcessTaskData>) {
+    this.logger.log(`Processing job ${job.id} of type ${job.data.type}`);
+    try {
+      // Implement task processing logic based on job.data.type
+      switch (job.data.type) {
+        case 'send-email':
+          await this.sendEmail(job.data.payload);
+          break;
+        case 'generate-report':
+          await this.generateReport(job.data.payload);
+          break;
+        default:
+          this.logger.warn(`Unknown task type: ${job.data.type}`);
+      }
+      this.logger.log(`Job ${job.id} processed successfully`);
+    } catch (error) {
+      this.logger.error(
+        `Error processing job ${job.id}: ${error.message}`,
+        error.stack,
+      );
+      throw error; // Bull will handle retries based on job options
+    }
+  }
+
+  private async sendEmail(payload: any) {
+    // Implement email sending logic here
+    this.logger.debug(`Sending email to ${payload.to}`);
+    // Example: integrate with an email service like SendGrid or SES
+  }
+
+  private async generateReport(payload: any) {
+    // Implement report generation logic here
+    this.logger.debug(`Generating report for ${payload.userId}`);
+    // Example: generate a PDF report and store it in S3
+  }
+}
+
+======== File: C:\src\modules\queue\queue.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
+
+export interface TaskData {
+  type: string;
+  payload: any;
+}
+
+@Injectable()
+export class QueueService {
+  private readonly logger = new Logger(QueueService.name);
+
+  constructor(@InjectQueue('my-queue') private readonly myQueue: Queue) {}
+
+  async addTask(data: TaskData): Promise<string> {
+    try {
+      const job = await this.myQueue.add('processTask', data);
+      this.logger.log(`Task added to queue successfully with job ID ${job.id}`);
+      return job.id;
+    } catch (error) {
+      this.logger.error(
+        `Error adding task to queue: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async getQueueStatus(): Promise<{
+    waiting: number;
+    active: number;
+    completed: number;
+    failed: number;
+  }> {
+    try {
+      const [waiting, active, completed, failed] = await Promise.all([
+        this.myQueue.getWaitingCount(),
+        this.myQueue.getActiveCount(),
+        this.myQueue.getCompletedCount(),
+        this.myQueue.getFailedCount(),
+      ]);
+      return { waiting, active, completed, failed };
+    } catch (error) {
+      this.logger.error(
+        `Error fetching queue status: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async getJobStatus(jobId: string): Promise<{
+    id: string;
+    name: string;
+    data: any;
+    opts: any;
+    progress: number;
+    delay: number;
+    timestamp: number;
+    attemptsMade: number;
+    failedReason: string;
+    stacktrace: string[];
+    returnvalue: any;
+  }> {
+    try {
+      const job = await this.myQueue.getJob(jobId);
+      if (!job) {
+        this.logger.warn(`Job not found with ID ${jobId}`);
+        throw new Error(`Job not found with ID ${jobId}`);
+      }
+      return {
+        id: job.id,
+        name: job.name,
+        data: job.data,
+        opts: job.opts,
+        progress: await job.progress(),
+        delay: job.delay,
+        timestamp: job.timestamp,
+        attemptsMade: job.attemptsMade,
+        failedReason: job.failedReason,
+        stacktrace: job.stacktrace,
+        returnvalue: job.returnvalue,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error fetching job status for ${jobId}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async removeJob(jobId: string): Promise<void> {
+    try {
+      const job = await this.myQueue.getJob(jobId);
+      if (job) {
+        await job.remove();
+        this.logger.log(`Job ${jobId} removed successfully`);
+      } else {
+        this.logger.warn(`Job ${jobId} not found for removal`);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error removing job ${jobId}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async retryJob(jobId: string): Promise<void> {
+    try {
+      const job = await this.myQueue.getJob(jobId);
+      if (job) {
+        await job.retry();
+        this.logger.log(`Job ${jobId} retried successfully`);
+      } else {
+        this.logger.warn(`Job ${jobId} not found for retry`);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error retrying job ${jobId}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async updateJob(jobId: string, data: TaskData): Promise<void> {
+    try {
+      const job = await this.myQueue.getJob(jobId);
+      if (job) {
+        await job.update(data);
+        this.logger.log(`Job ${jobId} updated successfully`);
+      } else {
+        this.logger.warn(`Job ${jobId} not found for update`);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error updating job ${jobId}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  async pauseQueue(): Promise<void> {
+    try {
+      await this.myQueue.pause();
+      this.logger.log('Queue paused');
+    } catch (error) {
+      this.logger.error(`Error pausing queue: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async resumeQueue(): Promise<void> {
+    try {
+      await this.myQueue.resume();
+      this.logger.log('Queue resumed');
+    } catch (error) {
+      this.logger.error(`Error resuming queue: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async cleanOldJobs(gracePeriod: number = 24 * 3600 * 1000): Promise<void> {
+    try {
+      await this.myQueue.clean(gracePeriod, 'completed');
+      await this.myQueue.clean(gracePeriod, 'failed');
+      this.logger.log(`Cleaned jobs older than ${gracePeriod}ms`);
+    } catch (error) {
+      this.logger.error(
+        `Error cleaning old jobs: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+}
+
+======== File: C:\src\modules\redis\redis.module.ts ========
+// src/redis/redis.module.ts
+
+import { Module, DynamicModule, Global } from '@nestjs/common';
+import { RedisService } from './redis.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import * as IORedis from 'ioredis';
+
+@Global()
+@Module({})
+export class RedisModule {
+  static forRoot(): DynamicModule {
+    return {
+      module: RedisModule,
+      imports: [ConfigModule],
+      providers: [
+        {
+          provide: 'REDIS_CLIENT',
+          useFactory: async (configService: ConfigService) => {
+            const redisOptions: IORedis.RedisOptions = {
+              host: configService.get<string>('redis.host'),
+              port: configService.get<number>('redis.port'),
+              password:
+                configService.get<string>('redis.password') || undefined,
+              db: configService.get<number>('redis.db') || 0,
+            };
+            const client = new IORedis(redisOptions);
+            client.on('error', (err) => {
+              console.error('Redis Client Error', err);
+            });
+            return client;
+          },
+          inject: [ConfigService],
+        },
+        RedisService,
+      ],
+      exports: ['REDIS_CLIENT', RedisService],
+    };
+  }
+
+  static forRootAsync(): DynamicModule {
+    return {
+      module: RedisModule,
+      imports: [ConfigModule],
+      providers: [
+        {
+          provide: 'REDIS_CLIENT',
+          useFactory: async (configService: ConfigService) => {
+            const redisOptions: IORedis.RedisOptions = {
+              host: configService.get<string>('redis.host'),
+              port: configService.get<number>('redis.port'),
+              password:
+                configService.get<string>('redis.password') || undefined,
+              db: configService.get<number>('redis.db') || 0,
+            };
+            const client = new IORedis(redisOptions);
+            client.on('error', (err) => {
+              console.error('Redis Client Error', err);
+            });
+            return client;
+          },
+          inject: [ConfigService],
+        },
+        RedisService,
+      ],
+      exports: ['REDIS_CLIENT', RedisService],
+    };
+  }
+}
+
+======== File: C:\src\modules\redis\redis.service.spec.ts ========
+import { Test, TestingModule } from '@nestjs/testing';
+import { RedisService } from './redis.service';
+import { ConfigService } from '@nestjs/config';
+import { RedisModule } from './redis.module';
+import * as IORedis from 'ioredis';
+
+describe('RedisService', () => {
+  let service: RedisService;
+  let redisClient: IORedis.Redis;
+
+  beforeAll(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [RedisModule.forRoot()],
+      providers: [RedisService],
+    }).compile();
+
+    service = module.get<RedisService>(RedisService);
+    redisClient = module.get<IORedis.Redis>('REDIS_CLIENT');
+  });
+
+  afterAll(async () => {
+    await redisClient.quit();
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  it('should set and get a key', async () => {
+    const key = 'test_key';
+    const value = 'test_value';
+    await service.set(key, value, 10);
+    const result = await service.get(key);
+    expect(result).toBe(value);
+  });
+
+  it('should delete a key', async () => {
+    const key = 'test_key_to_delete';
+    const value = 'delete_me';
+    await service.set(key, value);
+    const deletedCount = await service.del(key);
+    expect(deletedCount).toBe(1);
+    const result = await service.get(key);
+    expect(result).toBeNull();
+  });
+
+  it('should handle non-existent keys gracefully', async () => {
+    const key = 'non_existent_key';
+    const result = await service.get(key);
+    expect(result).toBeNull();
+  });
+});
+
+======== File: C:\src\modules\redis\redis.service.ts ========
+import { Injectable, Inject, OnModuleDestroy, Logger } from '@nestjs/common';
+import * as IORedis from 'ioredis';
+
+@Injectable()
+export class RedisService implements OnModuleDestroy {
+  private readonly logger = new Logger(RedisService.name);
+
+  constructor(
+    @Inject('REDIS_CLIENT') private readonly redisClient: IORedis.Redis,
+  ) {
+    this.redisClient.on('connect', () => {
+      this.logger.log('Connected to Redis');
+    });
+
+    this.redisClient.on('ready', () => {
+      this.logger.log('Redis client is ready');
+    });
+
+    this.redisClient.on('error', (err) => {
+      this.logger.error('Redis client error', err);
+    });
+
+    this.redisClient.on('close', () => {
+      this.logger.warn('Redis connection closed');
+    });
+
+    this.redisClient.on('reconnecting', () => {
+      this.logger.log('Reconnecting to Redis...');
+    });
+  }
+
+  /**
+   * Pings the Redis server to check connectivity.
+   * @returns The response from the Redis server.
+   */
+  async ping(): Promise<string> {
+    try {
+      const response = await this.redisClient.ping();
+      this.logger.debug(`Redis ping response: ${response}`);
+      return response;
+    } catch (error) {
+      this.logger.error('Redis ping failed', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sets a key-value pair in Redis with an optional TTL.
+   * @param key - The key to set.
+   * @param value - The value to set.
+   * @param ttl - Time to live in seconds.
+   */
+  async set(key: string, value: string, ttl?: number): Promise<void> {
+    try {
+      if (ttl) {
+        await this.redisClient.set(key, value, 'EX', ttl);
+      } else {
+        await this.redisClient.set(key, value);
+      }
+      this.logger.debug(`Set key ${key} in Redis`);
+    } catch (error) {
+      this.logger.error(`Failed to set key ${key} in Redis`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Gets the value of a key from Redis.
+   * @param key - The key to retrieve.
+   * @returns The value associated with the key.
+   */
+  async get(key: string): Promise<string | null> {
+    try {
+      const value = await this.redisClient.get(key);
+      this.logger.debug(`Get key ${key} from Redis: ${value}`);
+      return value;
+    } catch (error) {
+      this.logger.error(`Failed to get key ${key} from Redis`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Deletes a key from Redis.
+   * @param key - The key to delete.
+   * @returns The number of keys that were removed.
+   */
+  async del(key: string): Promise<number> {
+    try {
+      const result = await this.redisClient.del(key);
+      this.logger.debug(`Deleted key ${key} from Redis`);
+      return result;
+    } catch (error) {
+      this.logger.error(`Failed to delete key ${key} from Redis`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clears the entire Redis database.
+   */
+  async flushAll(): Promise<void> {
+    try {
+      await this.redisClient.flushall();
+      this.logger.warn('Flushed all keys from Redis');
+    } catch (error) {
+      this.logger.error('Failed to flush Redis', error);
+      throw error;
+ 
+
+======== File: C:\src\modules\redis\controller\redis.controller.ts ========
+import { Controller, Get, Query } from '@nestjs/common';
+import { RedisService } from '../redis.service';
+
+@Controller('redis')
+export class RedisController {
+  constructor(private readonly redisService: RedisService) {}
+
+  /**
+   * Pings the Redis server to verify connectivity.
+   * Example: GET /redis/ping
+   */
+  @Get('ping')
+  async pingRedis(): Promise<{ response: string }> {
+    const response = await this.redisService.ping();
+    return { response };
+  }
+
+  /**
+   * Sets a key-value pair in Redis.
+   * Example: GET /redis/set?key=foo&value=bar&ttl=60
+   */
+  @Get('set')
+  async setKey(
+    @Query('key') key: string,
+    @Query('value') value: string,
+    @Query('ttl') ttl?: number,
+  ): Promise<{ success: boolean }> {
+    await this.redisService.set(key, value, ttl ? Number(ttl) : undefined);
+    return { success: true };
+  }
+
+  /**
+   * Gets the value of a key from Redis.
+   * Example: GET /redis/get?key=foo
+   */
+  @Get('get')
+  async getKey(@Query('key') key: string): Promise<{ value: string | null }> {
+    const value = await this.redisService.get(key);
+    return { value };
+  }
+
+  /**
+   * Deletes a key from Redis.
+   * Example: GET /redis/del?key=foo
+   */
+  @Get('del')
+  async delKey(@Query('key') key: string): Promise<{ deleted: number }> {
+    const deleted = await this.redisService.del(key);
+    return { deleted };
+  }
+}
+
+======== File: C:\src\modules\shopify\shopify.module.ts ========
+import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
+import { ConfigService, ConfigModule } from '@nestjs/config';
+import { ShopifyAuthModule } from '@nestjs-shopify/auth';
+import { ShopifyWebhooksModule } from '@nestjs-shopify/webhooks';
+import { ShopifyFastifyModule } from '@nestjs-shopify/fastify';
+
+import { ShopifyAuthController } from './controllers/shopify-auth.controller';
+import { ShopifyService } from './services/shopify.service';
+import { ShopifyAuthService } from './services/shopify-auth.service';
+import { ShopifyWebhookHandler } from './webhooks/shopify.webhook.handler';
+// Import your custom ShopifyGraphQLService
+import { CustomShopifyGraphQLService } from './graphql/custom-shopify-graphql.service';
+import { ShopifyWebhooksService } from './services/shopify-webhooks.service';
+import { ShopifyProductService } from './services/shopify-product.service';
+
+import { RedisModule } from '../redis/redis.module';
+import { QueueModule } from '../queue/queue.module';
+import { ContentfulModule } from '../contentful/contentful.module';
+
+@Module({
+  imports: [
+    HttpModule,
+    ShopifyFastifyModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        apiKey: configService.get<string>('shopify.apiKey'),
+        apiSecret: configService.get<string>('shopify.apiSecret'),
+        scopes: configService.get<string[]>('shopify.scopes'),
+        hostName: configService.get<string>('shopify.hostName'),
+        apiVersion: configService.get<string>('shopify.apiVersion'),
+        isEmbedded: configService.get<boolean>('shopify.isEmbedded'),
+        authPath: '/auth/shopify/login',
+        afterAuthPath: '/auth/shopify/callback',
+        webhookPath: configService.get<string>('shopify.webhookPath'),
+      }),
+      inject: [ConfigService],
+    }),
+    ShopifyAuthModule,
+    ShopifyWebhooksModule,
+    RedisModule,
+    QueueModule,
+    ContentfulModule,
+  ],
+  controllers: [ShopifyAuthController],
+  providers: [
+    ShopifyService,
+    ShopifyAuthService,
+    ShopifyWebhookHandler,
+    // Use your custom ShopifyGraphQLService
+    CustomShopifyGraphQLService,
+    ShopifyWebhooksService,
+    ShopifyProductService,
+    // Add other Shopify-related providers here
+  ],
+  exports: [
+    ShopifyService,
+    ShopifyProductService,
+    // Add other services you want to export
+  ],
+})
+export class ShopifyModule {}
+
+======== File: C:\src\modules\shopify\controllers\shopify-auth.controller.ts ========
+import { Controller, Get, Req, Res } from '@nestjs/common';
+import { ShopifyAuth } from '@nestjs-shopify/auth';
+import { FastifyRequest, FastifyReply } from 'fastify';
+
+@Controller('auth/shopify')
+export class ShopifyAuthController {
+  constructor(private readonly shopifyAuth: ShopifyAuth) {}
+
+  @Get('login')
+  async login(@Req() req: FastifyRequest, @Res() res: FastifyReply) {
+    await this.shopifyAuth.beginAuth(req, res, false);
+  }
+
+  @Get('callback')
+  async callback(@Req() req: FastifyRequest, @Res() res: FastifyReply) {
+    await this.shopifyAuth.validateAuth(req, res);
+  }
+
+  @Get('logout')
+  async logout(@Req() req: FastifyRequest, @Res() res: FastifyReply) {
+    await this.shopifyAuth.logout(req, res);
+  }
+}
+
+======== File: C:\src\modules\shopify\decorators\measure.decorator.ts ========
+import { Logger } from '@nestjs/common';
+import { MetricsService } from '../../metrics/metrics.service';
+
+export function Measure(metricName: string) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor,
+  ) {
+    const originalMethod = descriptor.value;
+    const logger = new Logger(`${target.constructor.name}`);
+    const metricsService = new MetricsService(); // Ideally, this should be injected
+
+    descriptor.value = async function (...args: any[]) {
+      const start = Date.now();
+      try {
+        return await originalMethod.apply(this, args);
+      } finally {
+        const duration = Date.now() - start;
+        logger.debug(`${propertyKey} took ${duration}ms`);
+        metricsService.recordMethodDuration(metricName, duration);
+      }
+    };
+
+    return descriptor;
+  };
+}
+
+======== File: C:\src\modules\shopify\errors\index.ts ========
+
+======== File: C:\src\modules\shopify\graphql\custom-shopify-graphql.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import { ShopifyGraphQLService } from '@nestjs-shopify/graphql'; // Shopify GraphQL base service
+import { ConfigService } from '@nestjs/config';
+import { tracer } from 'dd-trace';
+import { retry } from 'ts-retry-promise';
+import * as Sentry from '@sentry/node';
+
+// Add any missing type imports, for example:
+import { Product, Collection, CreateProductInput, UpdateProductInput, CreateCollectionInput } from '../graphql/types';
+
+@Injectable()
+export class CustomShopifyGraphQLService {
+  private readonly logger = new Logger(CustomShopifyGraphQLService.name);
+
+  constructor(
+    private readonly shopifyGraphQLService: ShopifyGraphQLService, // Base Shopify service
+    private readonly configService: ConfigService,
+  ) {}
+
+  async query<T>(query: string, variables: any = {}): Promise<T> {
+    const span = tracer.startSpan('shopify.graphql.query');
+    try {
+      return await retry(() => this.shopifyGraphQLService.query(query, variables), {
+        maxAttempts: 3,
+        delay: 1000,
+        factor: 2,
+        onError: (error, attempt) => {
+          this.logger.warn(`GraphQL query attempt ${attempt} failed: ${error.message}`);
+          Sentry.captureException(error);
+        },
+      });
+    } catch (error) {
+      this.logger.error(`GraphQL query failed: ${error.message}`, error.stack);
+      throw error;
+    } finally {
+      span.finish();
+    }
+  }
+
+  async mutate<T>(mutation: string, variables: any = {}): Promise<T> {
+    return this.query<T>(mutation, variables);
+  }
+
+  // Implement getProductById and other methods based on query and mutate
+  async getProductById(id: string): Promise<Product> {
+    const query = `
+      query getProduct($id: ID!) {
+        product(id: $id) {
+          id
+          title
+          handle
+          description
+          images(first: 1) {
+            edges {
+              node {
+                originalSrc
+              }
+            }
+          }
+          variants(first: 1) {
+            edges {
+              node {
+                id
+                price
+              }
+            }
+          }
+        }
+      }
+    `;
+    const variables = { id };
+    const data = await this.query<{ product: Product }>(query, variables);
+    return data.product;
+  }
+
+  async createProduct(input: CreateProductInput): Promise<Product> {
+    const mutation = `
+      mutation createProduct($input: ProductInput!) {
+        productCreate(input: $input) {
+          product {
+            id
+            title
+            handle
+          }
+        }
+      }
+    `;
+    const variables = { input };
+    const data = await this.mutate<{ productCreate: { product: Product } }>(mutation, variables);
+    return data.productCreate.product;
+  }
+
+  async updateProduct(id: string, input: UpdateProductInput): Promise<Product> {
+    const mutation = `
+      mutation updateProduct($id: ID!, $input: ProductInput!) {
+        productUpdate(id: $id, input: $input) {
+          product {
+            id
+            title
+            handle
+          }
+        }
+      }
+    `;
+    const variables = { id, input };
+    const data = await this.mutate<{ productUpdate: { product: Product } }>(mutation, variables);
+    return data.productUpdate.product;
+  }
+
+  async getCollectionById(id: string): Promise<Collection> {
+    const query = `
+      query getCollection($id: ID!) {
+        collection(id: $id) {
+          id
+          title
+          description
+        }
+      }
+    `;
+    const variables = { id };
+    const data = await this.query<{ collection: Collection }>(query, variables);
+    return data.collection;
+  }
+
+  async createCollection(input: CreateCollectionInput): Promise<Collection> {
+    const mutation = `
+      mutation createCollection($input: CollectionInput!) {
+        collectionCreate(input: $input) {
+          collection {
+            id
+            title
+            description
+          }
+        }
+      }
+    `;
+    const variables = { input };
+    const data = await this.mutate<{ collectionCreate: { collection: Collection } }>(mutation, variables);
+    return data.collectionCreate.collection;
+  }
+}
+
+======== File: C:\src\modules\shopify\graphql\shopify-graphql.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { GraphQLClient } from 'graphql-request';
+import { tracer } from 'dd-trace'; // Ensure dd-trace is initialized
+import { retry } from 'ts-retry-promise';
+import * as Sentry from '@sentry/node';
+
+@Injectable()
+export class ShopifyGraphQLService {
+  private readonly logger = new Logger(ShopifyGraphQLService.name);
+  private client: GraphQLClient;
+
+  constructor(private readonly configService: ConfigService) {
+    this.initializeClient();
+  }
+
+  private initializeClient() {
+    const shopifyUrl =
+      this.configService.get<string>('shopify.graphqlUrl') ||
+      'https://your-shopify-store.myshopify.com/admin/api/2023-10/graphql.json';
+    const accessToken = this.configService.get<string>('shopify.accessToken');
+
+    this.client = new GraphQLClient(shopifyUrl, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Access-Token': accessToken,
+      },
+    });
+  }
+
+  setAccessToken(accessToken: string) {
+    this.client.setHeader('X-Shopify-Access-Token', accessToken);
+    this.logger.debug('Shopify access token updated');
+  }
+
+  async query<T>(query: string, variables: any = {}): Promise<T> {
+    const span = tracer.startSpan('shopify.graphql.query');
+    try {
+      return await retry(() => this.client.request<T>(query, variables), {
+        maxAttempts: 3,
+        delay: 1000,
+        factor: 2,
+        onError: (error, attempt) => {
+          this.logger.warn(
+            `GraphQL query attempt ${attempt} failed: ${error.message}`,
+          );
+          Sentry.captureException(error);
+        },
+      });
+    } catch (error) {
+      this.logger.error(`GraphQL query failed: ${error.message}`, error.stack);
+      throw error;
+    } finally {
+      span.finish();
+    }
+  }
+
+  async mutate<T>(mutation: string, variables: any = {}): Promise<T> {
+    return this.query<T>(mutation, variables);
+  }
+
+  // Product-related methods
+  async getProductById(id: string): Promise<Product> {
+    const query = `
+      query getProduct($id: ID!) {
+        product(id: $id) {
+          id
+          title
+          handle
+          description
+          images(first: 1) {
+            edges {
+              node {
+                originalSrc
+              }
+            }
+          }
+          variants(first: 1) {
+            edges {
+              node {
+                id
+                price
+              }
+            }
+          }
+        }
+      }
+    `;
+    const variables = { id };
+    const data = await this.query<{ product: Product }>(query, variables);
+    return data.product;
+  }
+
+  async getProducts(queryString: string): Promise<Product[]> {
+    const query = `
+      query getProducts($query: String!) {
+        products(first: 10, query: $query) {
+          edges {
+            node {
+              id
+              title
+              handle
+              description
+              images(first: 1) {
+                edges {
+                  node {
+                    originalSrc
+                  }
+                }
+              }
+              variants(first: 1) {
+                edges {
+                  node {
+                    id
+                    price
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const variables = { query: queryString };
+    const data = await this.query<{ products: { edges: { node: Product }[] } }>(
+      query,
+      variables,
+    );
+    return data.products.edges.map((edge) => edge.node);
+  }
+
+  async createProduct(product: ProductInput): Promise<Product> {
+    const mutation = `
+      mutation createProduct($input: ProductInput!) {
+        productCreate(input: $input) {
+          product {
+            id
+            title
+            handle
+            description
+            images(first: 1) {
+              edges {
+                node {
+                  originalSrc
+                }
+              }
+            }
+            variants(first: 1) {
+              edges {
+                node {
+                  id
+                  price
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const variables = { input: product };
+    const data = await this.mutate<{ productCreate: { product: Product } }>(
+      mutation,
+      variables,
+    );
+    return data.productCreate.product;
+  }
+
+  async updateProduct(id: string, product: ProductInput): Promise<Product> {
+    const mutation = `
+      mutation updateProduct($id: ID!, $input: ProductInput!) {
+        productUpdate(input: { id: $id, product: $input }) {
+          product {
+            id
+            title
+            handle
+            description
+            images(first: 1) {
+              edges {
+                node {
+                  originalSrc
+                }
+              }
+            }
+            variants(first: 1) {
+              edges {
+                node {
+                  id
+                  price
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const variables = { id, input: product };
+    const data = await this.mutate<{ productUpdate: { product: Product } }>(
+      mutation,
+      variables,
+    );
+    return data.productUpdate.product;
+  }
+
+  async deleteProduct(id: string): Promise<boolean> {
+    const mutation = `
+      mutation deleteProduct($id: ID!) {
+        productDelete(input: { id: $id }) {
+          deletedProductId
+        }
+      }
+    `;
+    const variables = { id };
+    const data = await this.mutate<{
+      productDelete: { deletedProductId: string };
+    }>(mutation, variables);
+    return !!data.productDelete.deletedProductId;
+  }
+
+  // Collection-related methods
+  async getCollectionById(id: string): Promise<Collection> {
+    const query = `
+      query($id: ID!) {
+        collection(id: $id) {
+          id
+          title
+          description
+          products(first: 10) {
+            edges {
+              node {
+                id
+                title
+              }
+            }
+          }
+        }
+      }
+    `;
+    const variables = { id };
+    const data = await this.query<{ collection: Collection }>(query, variables);
+    return data.collection;
+  }
+
+  async createCollection(collection: CollectionInput): Promise<Collection> {
+    const mutation = `
+      mutation createCollection($input: CollectionInput!) {
+        collectionCreate(input: $input) {
+          collection {
+            id
+            title
+            description
+          }
+        }
+      }
+    `;
+    const variables = { input: collection };
+    const data = await this.mutate<{
+      collectionCreate: { collection: Collection };
+    }>(mutation, variables);
+    return data.collectionCreate.collection;
+  }
+
+  // Order-related methods
+  async getOrderById(id: string): Promise<Order> {
+    const query = `
+      query getOrder($id: ID!) {
+        order(id: $id) {
+          id
+          name
+          totalPrice
+          createdAt
+          fulfillmentStatus
+          lineItems(first: 10) {
+            edges {
+              node {
+                title
+                quantity
+                variant {
+                  id
+                  title
+                  price
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+    const variables = { id };
+    const data = await this.query<{ order: Order }>(query, variables);
+    return data.order;
+  }
+
+  async createOrder(order: OrderInput): Promise<Order> {
+    const mutation = `
+      mutation createOrder($input: OrderInput!) {
+        orderCreate(input: $input) {
+          order {
+            id
+            name
+            totalPrice
+            createdAt
+            fulfillmentStatus
+          }
+        }
+      }
+    `;
+    const variables = { input: order };
+    const data = await this.mutate<{ orderCreate: { order: Order } }>(
+      mutation,
+      variables,
+    );
+    return data.orderCreate.order;
+  }
+
+  // CustomizationOption-related methods
+  async getCustomizationOptions(
+    productId: string,
+  ): Promise<CustomizationOption[]> {
+    const query = `
+      query getCustomizationOptions($productId: ID!) {
+        product(id: $productId) {
+          options {
+            id
+            name
+            values
+          }
+        }
+      }
+    `;
+    const variables = { productId };
+    const data = await this.query<{
+      product: { options: CustomizationOption[] };
+    }>(query, variables);
+    return data.product.options;
+  }
+
+  async createCustomizationOption(
+    productId: string,
+    option: CustomizationOptionInput,
+  ): Promise<CustomizationOption> {
+    const mutation = `
+      mutation createCustomizationOption($productId: ID!, $input: ProductOptionInput!) {
+        productOptionCreate(input: { productId: $productId, option: $input }) {
+          productOption {
+            id
+            name
+            values
+          }
+        }
+      }
+    `;
+    const variables = { productId, input: option };
+    const data = await this.mutate<{
+      productOptionCreate: { productOption: CustomizationOption };
+    }>(mutation, variables);
+    return data.productOptionCreate.productOption;
+  }
+
+  async updateCustomizationOption(
+    id: string,
+    option: CustomizationOptionInput,
+  ): Promise<CustomizationOption> {
+    const mutation = `
+      mutation updateCustomizationOption($id: ID!, $input: ProductOptionInput!) {
+        productOptionUpdate(input: { id: $id, option: $input }) {
+          productOption {
+            id
+            name
+            values
+          }
+        }
+      }
+    `;
+    const variables = { id, input: option };
+    const data = await this.mutate<{
+      productOptionUpdate: { productOption: CustomizationOption };
+    }>(mutation, variables);
+    return data.productOptionUpdate.productOption;
+  }
+
+  async deleteCustomizationOption(id: string): Promise<boolean> {
+    const mutation = `
+      mutation deleteCustomizationOption($id: ID!) {
+        productOptionDelete(input: { id: $id }) {
+          deletedProductOptionId
+        }
+      }
+    `;
+    const variables = { id };
+    const data = await this.mutate<{
+      productOptionDelete: { deletedProductOptionId: string };
+    }>(mutation, variables);
+    return !!data.productOptionDelete.deletedProductOptionId;
+  }
+
+  // Additional methods can be added similarly
+}
+
+======== File: C:\src\modules\shopify\handlers\shopify-webhook.handler.ts ========
+import { Injectable } from '@nestjs/common';
+import { ShopifyWebhooks } from '@nestjs-shopify/webhooks';
+
+@Injectable()
+export class ShopifyWebhookHandler {
+  constructor(private readonly shopifyWebhooks: ShopifyWebhooks) {}
+
+  // Implement methods using shopifyWebhooks
+  // ...
+}
+
+======== File: C:\src\modules\shopify\services\cache.service.ts ========
+import { Injectable } from '@nestjs/common';
+import { Redis } from 'ioredis';
+
+@Injectable()
+export class CacheService {
+  private readonly redisClient: Redis;
+
+  constructor() {
+    this.redisClient = new Redis({
+      host: 'your-redis-host',
+      port: 6379,
+      // Add other configuration options as needed
+    });
+  }
+
+  async get(key: string): Promise<string | null> {
+    return this.redisClient.get(key);
+  }
+
+  async set(key: string, value: string, ttlSeconds?: number): Promise<void> {
+    if (ttlSeconds) {
+      await this.redisClient.set(key, value, 'EX', ttlSeconds);
+    } else {
+      await this.redisClient.set(key, value);
+    }
+  }
+
+  async del(key: string): Promise<void> {
+    await this.redisClient.del(key);
+  }
+
+  // Add other caching methods as needed
+}
+
+======== File: C:\src\modules\shopify\services\shopify-auth.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import { ShopifyAuthService as BaseShopifyAuthService } from '@nestjs-shopify/auth';
+import { FastifyRequest, FastifyReply } from 'fastify';
+import { ConfigService } from '@nestjs/config';
+import { ShopifyService } from './shopify.service';
+import { HttpService } from '@nestjs/axios'; // Add HttpService import
+
+@Injectable()
+export class ShopifyAuthService extends BaseShopifyAuthService {
+  private readonly logger = new Logger(ShopifyAuthService.name);
+
+  constructor(
+    configService: ConfigService,
+    private readonly shopifyService: ShopifyService,
+    private readonly httpService: HttpService, // Inject HttpService if needed for HTTP calls
+  ) {
+    super(configService);
+  }
+
+  async handleAuthCallback(req: FastifyRequest, res: FastifyReply) {
+    try {
+      const session = await this.authenticate(req, res);
+      if (session) {
+        await this.shopifyService.setShopAccessToken(
+          session.shop,
+          session.accessToken,
+        );
+        this.logger.log(
+          `Authenticated and set access token for shop: ${session.shop}`,
+        );
+        res.redirect('/dashboard'); // Redirect to your dashboard or desired route
+      }
+    } catch (error) {
+      this.logger.error('Error during Shopify auth callback', error);
+      res.status(500).send('Authentication failed');
+    }
+  }
+
+  // Add any method making HTTP calls here
+}
+
+======== File: C:\src\modules\shopify\services\shopify-webhooks.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { ShopifyService } from './shopify.service';
+import { RedisService } from '../../redis/redis.service';
+import { QueueService } from '../../queue/queue.service';
+import { ContentfulService } from '../../contentful/contentful.service';
+import * as Sentry from '@sentry/node';
+import { Product } from '../graphql/schemas';
+import { CreateProductInput } from '../graphql/dto/create-product.input';
+import { validateWebhookPayload } from '../utils/webhook-validator';
+import { WebhookProcessingError } from '../errors/webhook-processing.error';
+import { retry } from 'ts-retry-promise';
+import { metrics } from '../../common/metrics';
+
+@Injectable()
+export class ShopifyWebhooksService {
+  private readonly logger = new Logger(ShopifyWebhooksService.name);
+
+  constructor(
+    private readonly shopifyService: ShopifyService,
+    private readonly redisService: RedisService,
+    private readonly queueService: QueueService,
+    private readonly contentfulService: ContentfulService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  @metrics.measure
+  async handleProductCreate(payload: any, shop: string): Promise<void> {
+    const startTime = Date.now();
+    try {
+      validateWebhookPayload(payload);
+      const productId = payload.id;
+      this.logger.log(
+        `Processing PRODUCTS_CREATE for Product ID: ${productId} from shop: ${shop}`,
+      );
+
+      await this.redisService.del(`product:${productId}`);
+
+      const product: Product = await retry(
+        () => this.shopifyService.getProductById(productId),
+        { retries: 3 },
+      );
+      if (!product) {
+        throw new WebhookProcessingError(
+          `Product with ID ${productId} not found.`,
+        );
+      }
+
+      const contentfulProductInput: CreateProductInput = {
+        title: product.title,
+        description: product.description,
+        // Map other necessary fields
+      };
+      await this.contentfulService.createProduct(contentfulProductInput);
+
+      await this.queueService.addTask({
+        type: 'send-email',
+        payload: {
+          to: this.configService.get<string>('ADMIN_EMAIL'),
+          subject: 'New Product Created',
+          body: `A new product "${product.title}" has been created.`,
+        },
+      });
+
+      this.logger.log(
+        `Successfully processed PRODUCTS_CREATE for Product ID: ${productId}`,
+      );
+    } catch (error) {
+      this.logger.error('Error processing PRODUCTS_CREATE webhook', error);
+      Sentry.captureException(error);
+      throw new WebhookProcessingError(
+        'Failed to process PRODUCTS_CREATE webhook',
+        error,
+      );
+    } finally {
+      metrics.record('webhook_processing_time', Date.now() - startTime);
+    }
+  }
+
+  // Other methods...
+}
+
+======== File: C:\src\modules\shopify\services\shopify.service.integration.spec.ts ========
+import { Test, TestingModule } from '@nestjs/testing';
+import { ShopifyService } from './shopify.service';
+import { CustomShopifyGraphQLService } from '../graphql/custom-shopify-graphql.service'; // Updated import for custom service
+import { RedisService } from '../../redis/redis.service';
+import { ContentfulService } from '../../contentful/contentful.service';
+import { QueueService } from '../../queue/queue.service';
+import { ConfigService } from '@nestjs/config';
+import { ProductNotFoundError } from '../../common/errors/product-not-found.error';
+import { ShopifyAPIError } from '../../common/errors/shopify-api.error';
+
+describe('ShopifyService Integration', () => {
+  let service: ShopifyService;
+  let customShopifyGraphQLService: CustomShopifyGraphQLService; // Updated variable name
+  let redisService: RedisService;
+  let contentfulService: ContentfulService;
+  let queueService: QueueService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ShopifyService,
+        {
+          provide: CustomShopifyGraphQLService, // Updated to provide custom service
+          useValue: {
+            getProductById: jest.fn(),
+          },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+          },
+        },
+        {
+          provide: ContentfulService,
+          useValue: {
+            createProduct: jest.fn(),
+            updateProduct: jest.fn(),
+          },
+        },
+        {
+          provide: QueueService,
+          useValue: {
+            addTask: jest.fn(),
+          },
+        },
+        ConfigService,
+      ],
+    }).compile();
+
+    service = module.get<ShopifyService>(ShopifyService);
+    customShopifyGraphQLService = module.get<CustomShopifyGraphQLService>(
+      CustomShopifyGraphQLService,
+    ); // Updated service name
+    redisService = module.get<RedisService>(RedisService);
+    contentfulService = module.get<ContentfulService>(ContentfulService);
+    queueService = module.get<QueueService>(QueueService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('getProductById', () => {
+    it('should return product from cache if available', async () => {
+      const productId = 'prod_123';
+      const cachedProduct = { id: productId, title: 'Cached Product' };
+      (redisService.get as jest.Mock).mockResolvedValue(
+        JSON.stringify(cachedProduct),
+      );
+
+      const result = await service.getProductById(productId);
+      expect(redisService.get).toHaveBeenCalledWith(`product:${productId}`);
+      expect(result).toEqual(cachedProduct);
+      expect(customShopifyGraphQLService.getProductById).not.toHaveBeenCalled(); // Updated service call
+    });
+
+    it('should fetch product from Shopify if not in cache and cache it', async () => {
+      const productId = 'prod_456';
+      const fetchedProduct = { id: productId, title: 'Fetched Product' };
+      (redisService.get as jest.Mock).mockResolvedValue(null);
+      (customShopifyGraphQLService.getProductById as jest.Mock).mockResolvedValue(
+        fetchedProduct,
+      );
+      (redisService.set as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await service.getProductById(productId);
+      expect(redisService.get).toHaveBeenCalledWith(`product:${productId}`);
+      expect(customShopifyGraphQLService.getProductById).toHaveBeenCalledWith(
+        productId,
+      );
+      expect(redisService.set).toHaveBeenCalledWith(
+        `product:${productId}`,
+        JSON.stringify(fetchedProduct),
+        3600,
+      );
+      expect(result).toEqual(fetchedProduct);
+    });
+
+    it('should throw ProductNotFoundError if product not found in Shopify', async () => {
+      const productId = 'prod_nonexistent';
+      (redisService.get as jest.Mock).mockResolvedValue(null);
+      (customShopifyGraphQLService.getProductById as jest.Mock).mockResolvedValue(
+        null,
+      );
+
+      await expect(service.getProductById(productId)).rejects.toThrow(
+        ProductNotFoundError,
+      );
+      expect(redisService.set).not.toHaveBeenCalled();
+    });
+
+    it('should throw ShopifyAPIError on ShopifyService failure', async () => {
+      const productId = 'prod_error';
+      (redisService.get as jest.Mock).mockResolvedValue(null);
+      (customShopifyGraphQLService.getProductById as jest.Mock).mockRejectedValue(
+        new Error('Shopify API failure'),
+      );
+
+      await expect(service.getProductById(productId)).rejects.toThrow(
+        ShopifyAPIError,
+      );
+      expect(redisService.set).not.toHaveBeenCalled();
+    });
+  });
+});
+
+======== File: C:\src\modules\shopify\services\shopify.service.spec.ts ========
+import { Test, TestingModule } from '@nestjs/testing';
+import { ShopifyService } from './shopify.service';
+import { CustomShopifyGraphQLService } from '../graphql/custom-shopify-graphql.service';  // Use the custom service
+import { ConfigService } from '@nestjs/config';
+import { RedisService } from '../../redis/redis.service';
+import { ProductNotFoundError } from '../../common/errors/product-not-found.error';
+import { ShopifyAPIError } from '../../common/errors/shopify-api.error';
+
+describe('ShopifyService', () => {
+  let service: ShopifyService;
+  let customShopifyGraphQLService: jest.Mocked<CustomShopifyGraphQLService>;  // Updated to use the custom service
+  let configService: jest.Mocked<ConfigService>;
+  let redisService: jest.Mocked<RedisService>;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ShopifyService,
+        {
+          provide: CustomShopifyGraphQLService,  // Use custom service in the test setup
+          useFactory: () => ({
+            getProductById: jest.fn(),
+            mutate: jest.fn(),
+          }),
+        },
+        {
+          provide: ConfigService,
+          useFactory: () => ({}),
+        },
+        {
+          provide: RedisService,
+          useFactory: () => ({
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+          }),
+        },
+      ],
+    }).compile();
+
+    service = module.get<ShopifyService>(ShopifyService);
+    customShopifyGraphQLService = module.get(CustomShopifyGraphQLService);  // Get custom service
+    configService = module.get(ConfigService);
+    redisService = module.get(RedisService);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('invalidateProductCache', () => {
+    it('should invalidate cache for a product', async () => {
+      const productId = '123';
+      await service.invalidateProductCache(productId);
+      expect(redisService.del).toHaveBeenCalledWith(`product:${productId}`);
+    });
+
+    it('should log error if cache invalidation fails', async () => {
+      const productId = '123';
+      const error = new Error('Redis error');
+      redisService.del.mockRejectedValue(error);
+
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+      await service.invalidateProductCache(productId);
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        `Failed to invalidate cache for product ${productId}: ${error.message}`,
+      );
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe('getProductById', () => {
+    const productId = '123';
+    const cacheKey = `product:${productId}`;
+    const mockProduct = { id: productId, title: 'Test Product' };
+
+    it('should return cached product if available', async () => {
+      redisService.get.mockResolvedValue(JSON.stringify(mockProduct));
+      const result = await service.getProductById(productId);
+      expect(result).toEqual(mockProduct);
+      expect(redisService.get).toHaveBeenCalledWith(cacheKey);
+      expect(customShopifyGraphQLService.getProductById).not.toHaveBeenCalled();
+    });
+
+    it('should fetch and cache product if not in cache', async () => {
+      redisService.get.mockResolvedValue(null);
+      customShopifyGraphQLService.getProductById.mockResolvedValue(mockProduct);
+
+      const result = await service.getProductById(productId);
+
+      expect(result).toEqual(mockProduct);
+      expect(redisService.get).toHaveBeenCalledWith(cacheKey);
+      expect(customShopifyGraphQLService.getProductById).toHaveBeenCalledWith(
+        productId,
+      );
+      expect(redisService.set).toHaveBeenCalledWith(
+        cacheKey,
+        JSON.stringify(mockProduct),
+        3600,
+      );
+    });
+
+    it('should throw ProductNotFoundError if product not found', async () => {
+      redisService.get.mockResolvedValue(null);
+      customShopifyGraphQLService.getProductById.mockResolvedValue(null);
+
+      await expect(service.getProductById(productId)).rejects.toThrow(
+        ProductNotFoundError,
+      );
+    });
+
+    it('should throw ShopifyAPIError on API failure', async () => {
+      redisService.get.mockResolvedValue(null);
+      customShopifyGraphQLService.getProductById.mockRejectedValue(
+        new Error('API Error'),
+      );
+
+      await expect(service.getProductById(productId)).rejects.toThrow(
+        ShopifyAPIError,
+      );
+    });
+  });
+
+  // Add more test cases for other methods as needed
+});
+
+======== File: C:\src\modules\shopify\services\shopify.service.ts ========
+import { Injectable } from '@nestjs/common';
+import { ShopifyConnector } from '@nestjs-shopify/core';
+import { CustomShopifyGraphQLService } from '../graphql/custom-shopify-graphql.service';
+import { RedisService } from '../../redis/redis.service';
+import { Product } from '../graphql/types';  // Updated import path
+import { CreateProductInput } from '../graphql/dto/create-product.input'; // Updated import path
+import { UpdateProductInput, CreateCollectionInput } from '../graphql/dto/create-product.input'; // Update this based on your actual DTOs
+import { ShopifyAPIError } from '../../shared/errors/shopify-api.error';
+import { ProductNotFoundError } from '../../shared/errors/product-not-found.error';
+import { HttpService } from '@nestjs/axios';
+import { AxiosResponse } from 'axios';
+import { Observable } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+
+@Injectable()
+export class ShopifyService {
+  constructor(
+    private readonly shopifyConnector: ShopifyConnector,
+    private readonly customShopifyGraphQLService: CustomShopifyGraphQLService,
+    private readonly redisService: RedisService,
+    private readonly httpService: HttpService,
+  ) {}
+
+  async invalidateProductCache(productId: string): Promise<void> {
+    try {
+      await this.redisService.del(`product:${productId}`);
+      this.logger.debug(`Cache invalidated for product ${productId}`);
+    } catch (error) {
+      this.logger.error(`Failed to invalidate cache for product ${productId}: ${error.message}`);
+    }
+  }
+
+  async getProductById(id: string): Promise<Product> {
+    const cacheKey = `product:${id}`;
+    const cachedProduct = await this.redisService.get(cacheKey);
+    if (cachedProduct) {
+      this.logger.debug(`Cache hit for product ${id}`);
+      return JSON.parse(cachedProduct);
+    }
+
+    try {
+      const product = await this.customShopifyGraphQLService.getProductById(id);
+      if (!product) {
+        throw new ProductNotFoundError(id);
+      }
+
+      await this.redisService.set(cacheKey, JSON.stringify(product), 3600); // Cache for 1 hour
+      this.logger.debug(`Fetched and cached product ${id}`);
+      return product;
+    } catch (error) {
+      this.logger.error(`Error fetching product ${id}: ${error.message}`);
+      throw new ShopifyAPIError(`Failed to fetch product ${id}`);
+    }
+  }
+
+  async createProduct(input: CreateProductInput): Promise<Product> {
+    try {
+      const product = await this.customShopifyGraphQLService.createProduct(input);
+      this.logger.debug(`Created product with ID ${product.id}`);
+      return product;
+    } catch (error) {
+      this.logger.error(`Error creating product: ${error.message}`);
+      throw new ShopifyAPIError('Failed to create product');
+    }
+  }
+
+  async updateProduct(id: string, input: UpdateProductInput): Promise<Product> {
+    try {
+      const product = await this.customShopifyGraphQLService.updateProduct(id, input);
+      await this.invalidateProductCache(id);
+      this.logger.debug(`Updated product ${id}`);
+      return product;
+    } catch (error) {
+      this.logger.error(`Error updating product ${id}: ${error.message}`);
+      throw new ShopifyAPIError(`Failed to update product ${id}`);
+    }
+  }
+
+  async getCollectionById(id: string): Promise<Collection> {
+    const cacheKey = `collection:${id}`;
+    const cachedCollection = await this.redisService.get(cacheKey);
+    if (cachedCollection) {
+      this.logger.debug(`Cache hit for collection ${id}`);
+      return JSON.parse(cachedCollection);
+    }
+
+    try {
+      const collection = await this.customShopifyGraphQLService.getCollectionById(id);
+      if (!collection) {
+        throw new Error(`Collection not found: ${id}`);
+      }
+
+      await this.redisService.set(cacheKey, JSON.stringify(collection), 3600); // Cache for 1 hour
+      this.logger.debug(`Fetched and cached collection ${id}`);
+      return collection;
+    } catch (error) {
+      this.logger.error(`Error fetching collection ${id}: ${error.message}`);
+      throw new ShopifyAPIError(`Failed to fetch collection ${id}`);
+    }
+  }
+
+  async createCollection(input: CreateCollectionInput): Promise<Collection> {
+    try {
+      const collection = await this.customShopifyGraphQLService.createCollection(input);
+      this.logger.debug(`Created collection with ID ${collection.id}`);
+      return collection;
+    } catch (error) {
+      this.logger.error(`Error creating collection: ${error.message}`);
+      throw new ShopifyAPIError('Failed to create collection');
+    }
+  }
+
+  getShopifyProduct(productId: string): Observable<AxiosResponse<any>> {
+    return this.httpService.get(`https://shopify.com/products/${productId}`).pipe(
+      map((response) => response.data),
+      catchError((error) => {
+        this.logger.error('Failed to fetch product from Shopify');
+        throw error;
+      }),
+    );
+  }
+}
+
+======== File: C:\src\modules\shopify\webhooks\shopify.webhook.handler.ts ========
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  WebhookHandler,
+  OnShopifyWebhook,
+  ShopifyWebhookTypes,
+} from '@nestjs-shopify/webhooks';
+import { ShopifyWebhooksService } from '../services/shopify-webhooks.service';
+import { Request } from 'fastify';
+import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
+
+@Injectable()
+export class ShopifyWebhookHandler implements OnShopifyWebhook {
+  private readonly logger = new Logger(ShopifyWebhookHandler.name);
+
+  constructor(
+    private readonly shopifyWebhooksService: ShopifyWebhooksService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  /**
+   * Validates the HMAC signature of the incoming webhook.
+   * @param req - The incoming request.
+   * @param body - The raw body of the request.
+   * @returns True if valid, false otherwise.
+   */
+  private verifyHmac(req: Request, body: string): boolean {
+    const hmacHeader = req.headers['x-shopify-hmac-sha256'] as string;
+    const secret = this.configService.get<string>('shopify.apiSecret');
+    const hash = crypto
+      .createHmac('sha256', secret)
+      .update(body, 'utf8')
+      .digest('base64');
+    return hash === hmacHeader;
+  }
+
+  @WebhookHandler(ShopifyWebhookTypes.ProductsCreate)
+  async handleProductsCreate(req: Request, payload: any, shop: string) {
+    const body = (req as any).rawBody; // Access the raw body captured in main.ts
+    if (!this.verifyHmac(req, body)) {
+      this.logger.warn('Invalid HMAC for PRODUCTS_CREATE webhook');
+      throw new BadRequestException('Invalid HMAC signature');
+    }
+    this.logger.log(`Received PRODUCTS_CREATE webhook from ${shop}`);
+    await this.shopifyWebhooksService.handleProductCreate(payload, shop);
+  }
+
+  @WebhookHandler(ShopifyWebhookTypes.ProductsUpdate)
+  async handleProductsUpdate(req: Request, payload: any, shop: string) {
+    const body = (req as any).rawBody; // Access the raw body captured in main.ts
+    if (!this.verifyHmac(req, body)) {
+      this.logger.warn('Invalid HMAC for PRODUCTS_UPDATE webhook');
+      throw new BadRequestException('Invalid HMAC signature');
+    }
+    this.logger.log(`Received PRODUCTS_UPDATE webhook from ${shop}`);
+    await this.shopifyWebhooksService.handleProductUpdate(payload, shop);
+  }
+
+  // Add more webhook handlers with HMAC verification as needed
+}
+
+======== File: C:\src\modules\shopify\webhooks\webhook-processor.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import { QueueService } from '../../queue/queue.service';
+import { ShopifyWebhookTypes as BaseShopifyWebhookTypes } from '@nestjs-shopify/webhooks';
+type ShopifyWebhookTypes = BaseShopifyWebhookTypes;
+import { ShopifyWebhooksService } from '../services/shopify-webhooks.service';
+import { HttpService } from '@nestjs/axios'; // Import HttpService for HTTP requests
+
+@Injectable()
+export class ShopifyWebhookProcessorService {
+  private readonly logger = new Logger(ShopifyWebhookProcessorService.name);
+
+  constructor(
+    private readonly queueService: QueueService,
+    private readonly shopifyWebhooksService: ShopifyWebhooksService,
+    private readonly httpService: HttpService, // Inject HttpService
+  ) {}
+
+  async queueWebhook(
+    type: ShopifyWebhookTypes,
+    payload: any,
+    shop: string,
+  ): Promise<void> {
+    const jobId = await this.queueService.addJob('shopify-webhook', {
+      type,
+      payload,
+      shop,
+    });
+    this.logger.log(`Queued webhook job ${jobId} for ${type} from ${shop}`);
+  }
+
+  async handleWebhookJob(job: {
+    type: ShopifyWebhookTypes;
+    payload: any;
+    shop: string;
+  }): Promise<void> {
+    this.logger.log(
+      `Processing queued webhook job for ${job.type} from ${job.shop}`,
+    );
+
+    try {
+      switch (job.type) {
+        case ShopifyWebhookTypes.ProductsCreate:
+          await this.shopifyWebhooksService.handleProductCreate(
+            job.payload,
+            job.shop,
+          );
+          break;
+        case ShopifyWebhookTypes.ProductsUpdate:
+          await this.shopifyWebhooksService.handleProductUpdate(
+            job.payload,
+            job.shop,
+          );
+          break;
+        // Add cases for other webhook types as needed
+        default:
+          this.logger.warn(`Unhandled webhook type: ${job.type}`);
+      }
+
+      // Example HTTP request using HttpService
+      // await this.httpService.post('https://your-endpoint.com/webhook', {
+      //   type: job.type,
+      //   shop: job.shop,
+      //   payload: job.payload,
+      // }).toPromise();
+
+    } catch (error) {
+      this.logger.error(
+        `Error processing webhook job: ${error.message}`,
+        error.stack,
+      );
+      // You might want to implement retry logic or error reporting here
+    }
+  }
+}
+
+======== File: C:\src\modules\user\user.module.ts ========
+import { Module } from '@nestjs/common';
+import { UserController } from './controllers/user.controller';
+import { UserService } from './services/user.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserEntity } from './entities/user.entity';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([UserEntity])],
+  controllers: [UserController],
+  providers: [UserService],
+  exports: [UserService],
+})
+export class UserModule {}
+
+======== File: C:\src\modules\user\controllers\user.controller.ts ========
+// src/user/controllers/user.controller.ts
+
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { UserService } from '../services/user.service';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { GetUserDto } from '../dto/get-user.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+} from '@nestjs/swagger';
+
+@ApiTags('users')
+@Controller('users')
+export class UserController {
+  constructor(private readonly userService: UserService) {}
+
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiBody({ type: CreateUserDto })
+  @ApiResponse({
+    status: 201,
+    description: 'User registered successfully.',
+    type: GetUserDto,
+  })
+  @ApiResponse({ status: 400, description: 'Validation error.' })
+  async register(@Body() createUserDto: CreateUserDto): Promise<GetUserDto> {
+    return this.userService.createUser(createUserDto);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get user by ID' })
+  @ApiParam({ name: 'id', type: 'string', description: 'User ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User retrieved successfully.',
+    type: GetUserDto,
+  })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  async getUser(@Param('id') id: string): Promise<GetUserDto> {
+    return this.userService.getUserById(id);
+  }
+}
+// src/user/controllers/user.controller.ts
+
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { UserService } from '../services/user.service';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { GetUserDto } from '../dto/get-user.dto';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { UseGuards } from '@nestjs/common';
+
+@UseGuards(ThrottlerGuard)
+@ApiTags('users')
+@Controller('users')
+export class UserController {
+  // ... existing code
+
+  @Post('register')
+  @Throttle(5, 60) // Max 5 requests per minute
+  async register(@Body() createUserDto: CreateUserDto): Promise<GetUserDto> {
+    // ... existing code
+  }
+
+  // ... other routes
+}
+
+======== File: C:\src\modules\user\dto\get-user.dto.ts ========
+// src/user/dto/get-user.dto.ts
+
+import { ApiProperty } from '@nestjs/swagger';
+
+export class GetUserDto {
+  @ApiProperty({
+    description: 'Unique identifier for the user',
+    example: 'uuid',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'User email address',
+    example: 'user@example.com',
+  })
+  email: string;
+
+  @ApiProperty({ description: 'User full name', example: 'John Doe' })
+  name: string;
+
+  @ApiProperty({ description: 'Timestamp when the user was created' })
+  createdAt: Date;
+
+  @ApiProperty({ description: 'Timestamp when the user was last updated' })
+  updatedAt: Date;
+}
+
+======== File: C:\src\modules\user\dto\update-user.dto.ts ========
+import { PartialType } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, MinLength, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { CreateUserDto } from './create-user.dto';
+
+export class UpdateUserDto extends PartialType(CreateUserDto) {
+  @ApiProperty({
+    description: 'User email address',
+    example: 'user@example.com',
+    required: false,
+  })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @ApiProperty({
+    description: 'User full name',
+    example: 'John Doe',
+    required: false,
+  })
+  @IsOptional()
+  @IsNotEmpty()
+  name?: string;
+
+  @ApiProperty({
+    description: 'User password (minimum 6 characters)',
+    example: 'newStrongPassword123',
+    required: false,
+  })
+  @IsOptional()
+  @MinLength(6)
+  password?: string;
+}
+
+======== File: C:\src\modules\user\entities\user.entity.ts ========
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+@Entity('users')
+export class UserEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Column({ unique: true })
+  email!: string;
+
+  @Column()
+  name!: string;
+
+  @Column()
+  password!: string; // Hashed password
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
+}
+
+======== File: C:\src\modules\user\services\user.service.spec.ts ========
+// src/user/services/user.service.spec.ts
+
+import { Test, TestingModule } from '@nestjs/testing';
+import { UserService } from './user.service';
+import { Repository } from 'typeorm';
+import { UserEntity } from '../entities/user.entity';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { CreateUserDto } from '../dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
+import { ProductNotFoundError } from '../../common/errors/product-not-found.error';
+
+describe('UserService', () => {
+  let service: UserService;
+  let repository: Repository<UserEntity>;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserService,
+        {
+          provide: getRepositoryToken(UserEntity),
+          useClass: Repository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+    repository = module.get<Repository<UserEntity>>(
+      getRepositoryToken(UserEntity),
+    );
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('createUser', () => {
+    it('should create a user with hashed password', async () => {
+      const createUserDto: CreateUserDto = {
+        email: 'test@example.com',
+        name: 'Test User',
+        password: 'password123',
+      };
+
+      jest.spyOn(repository, 'create').mockReturnValue(createUserDto as any);
+      jest.spyOn(repository, 'save').mockResolvedValue({
+        id: 'uuid',
+        ...createUserDto,
+        password: await bcrypt.hash(createUserDto.password, 10),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any);
+
+      const result = await service.createUser(createUserDto);
+      expect(result).toHaveProperty('id');
+      expect(result.email).toBe(createUserDto.email);
+      expect(result.name).toBe(createUserDto.name);
+      expect(result).not.toHaveProperty('password');
+    });
+  });
+
+  describe('getUserById', () => {
+    it('should return a user by id', async () => {
+      const user = {
+        id: 'uuid',
+        email: 'test@example.com',
+        name: 'Test User',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      jest.spyOn(repository, 'findOneBy').mockResolvedValue(user as any);
+
+      const result = await service.getUserById('uuid');
+      expect(result).toEqual(user);
+    });
+
+    it('should throw ProductNotFoundError if user not found', async () => {
+      jest.spyOn(repository, 'findOneBy').mockResolvedValue(null);
+
+      await expect(service.getUserById('non-existent-id')).rejects.toThrow(
+        ProductNotFoundError,
+      );
+    });
+  });
+});
+
+======== File: C:\src\modules\user\services\user.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from '../entities/user.entity';
+import { Repository, EntityManager } from 'typeorm';
+import { CreateUserDto } from '../dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
+import { GetUserDto } from '../dto/get-user.dto';
+import { UserNotFoundError } from '../../common/errors/user-not-found.error';
+import { ConflictError } from '../../common/errors/conflict.error';
+import { validateOrReject } from 'class-validator';
+import { RedisService } from '../../redis/redis.service';
+
+@Injectable()
+export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
+  constructor(
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+    private readonly entityManager: EntityManager,
+    private readonly redisService: RedisService,
+  ) {}
+
+  async createUser(createUserDto: CreateUserDto): Promise<GetUserDto> {
+    this.logger.log(
+      `Attempting to create user with email: ${createUserDto.email}`,
+    );
+
+    try {
+      await validateOrReject(createUserDto);
+
+      return await this.entityManager.transaction(
+        async (transactionalEntityManager) => {
+          const existingUser = await transactionalEntityManager.findOne(
+            UserEntity,
+            { where: { email: createUserDto.email } },
+          );
+          if (existingUser) {
+            throw new ConflictError('User with this email already exists');
+          }
+
+          const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+          const user = transactionalEntityManager.create(UserEntity, {
+            ...createUserDto,
+            password: hashedPassword,
+          });
+
+          await transactionalEntityManager.save(user);
+          this.logger.log(`User created successfully with ID: ${user.id}`);
+
+          return this.toDto(user);
+        },
+      );
+    } catch (error) {
+      this.logger.error(`Failed to create user: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async getUserById(id: string): Promise<GetUserDto> {
+    this.logger.log(`Attempting to fetch user with ID: ${id}`);
+
+    try {
+      const cachedUser = await this.redisService.get(`user:${id}`);
+      if (cachedUser) {
+        return JSON.parse(cachedUser);
+      }
+
+      const user = await this.userRepository.findOneBy({ id });
+      if (!user) {
+        this.logger.warn(`User not found with ID: ${id}`);
+        throw new UserNotFoundError(id);
+      }
+
+      const userDto = this.toDto(user);
+      await this.redisService.set(`user:${id}`, JSON.stringify(userDto), 3600); // Cache for 1 hour
+      return userDto;
+    } catch (error) {
+      this.logger.error(
+        `Error fetching user with ID ${id}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
+    }
+  }
+
+  // ... rest of the code
+}
+
+======== File: C:\src\shared\common.module.ts ========
+// src/common/common.module.ts
+
+import { Module } from '@nestjs/common';
+import { SecretManagerService } from './services/secret-manager.service';
+import { ConfigModule } from '@nestjs/config';
+
+@Module({
+  imports: [ConfigModule],
+  providers: [SecretManagerService],
+  exports: [SecretManagerService],
+})
+export class CommonModule {}
+
+======== File: C:\src\shared\errors\conflict.error.ts ========
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(`Conflict: ${message}`);
+    this.name = 'ConflictError';
+  }
+}
+
+======== File: C:\src\shared\errors\contentful-api.error.ts ========
+export class ContentfulAPIError extends Error {
+    constructor(message: string) {
+      super(`Contentful API Error: ${message}`);
+      this.name = 'ContentfulAPIError';
+    }
+
+======== File: C:\src\shared\errors\product-not-found.error.ts ========
+export class ProductNotFoundError extends Error {
+  constructor(productId: string) {
+    super(`Product with ID ${productId} not found`);
+    this.name = 'ProductNotFoundError';
+  }
+}
+
+======== File: C:\src\shared\errors\shopify-api.error.ts ========
+export class ShopifyAPIError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ShopifyAPIError';
+  }
+}
+
+======== File: C:\src\shared\errors\webhook-processing.errors.ts ========
+export class WebhookProcessingError extends Error {
+  constructor(webhookType: string, message: string) {
+    super(`Error processing ${webhookType} webhook: ${message}`);
+    this.name = 'WebhookProcessingError';
+  }
+}
+
+======== File: C:\src\shared\filters\all-exceptions.filter.ts ========
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
+import { FastifyReply, FastifyRequest } from 'fastify';
+
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const request = ctx.getRequest<FastifyRequest>();
+    const response = ctx.getResponse<FastifyReply>();
+
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    const message =
+      exception instanceof HttpException
+        ? exception.getResponse()
+        : 'Internal server error';
+
+    this.logger.error(`Status: ${status} Error: ${JSON.stringify(message)}`);
+
+    response.status(status).send({
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      message,
+    });
+  }
+}
+
+======== File: C:\src\shared\filters\shopify-exception.filter.ts ========
+// shopify-exception.filter.ts
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
+import { FastifyReply, FastifyRequest } from 'fastify';
+import { ShopifyConfigError } from '../../shopify/shopify.module'; // Ensure correct import path
+
+@Catch()
+export class ShopifyExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost): void {
+    const ctx = host.switchToHttp();
+    const request = ctx.getRequest<FastifyRequest>();
+    const response = ctx.getResponse<FastifyReply>();
+
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message = 'Internal server error';
+
+    if (exception instanceof ShopifyConfigError) {
+      status = HttpStatus.BAD_REQUEST;
+      message = exception.message;
+    } else if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      message = exception.getResponse() as string;
+    }
+
+    response.status(status).send({
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      message,
+    });
+  }
+}
+
+======== File: C:\src\shared\guards\csrf.guard.ts ========
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { FastifyRequest } from 'fastify';
+
+@Injectable()
+export class CsrfGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest<FastifyRequest>();
+    const csrfToken = request.headers['x-csrf-token'];
+    if (!csrfToken || csrfToken !== process.env.CSRF_SECRET) {
+      throw new UnauthorizedException('Invalid CSRF token');
+    }
+    return true;
+  }
+}
+
+======== File: C:\src\shared\interceptors\logging.interceptor.ts ========
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  Logger,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { v4 as uuidv4 } from 'uuid';
+import { FastifyRequest } from 'fastify';
+
+@Injectable()
+export class LoggingInterceptor implements NestInterceptor {
+  private readonly logger = new Logger('HTTP');
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    const request = context.switchToHttp().getRequest<FastifyRequest>();
+    const { method, url } = request;
+    const requestId = uuidv4();
+    const start = Date.now();
+
+    // Attach requestId to the request for future reference
+    (request as any).requestId = requestId;
+
+    this.logger.log(`[${requestId}] ${method} ${url} - Incoming request`);
+
+    return next.handle().pipe(
+      tap(() => {
+        const duration = Date.now() - start;
+        this.logger.log(
+          `[${requestId}] ${method} ${url} - Response sent in ${duration}ms`,
+        );
+      }),
+    );
+  }
+}
+
+======== File: C:\src\shared\interceptors\sentry.interceptor.ts ========
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  Logger,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import * as Sentry from '@sentry/node';
+
+@Injectable()
+export class SentryInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(SentryInterceptor.name);
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    return next.handle().pipe(
+      catchError((error) => {
+        Sentry.captureException(error);
+        this.logger.error('Exception captured by Sentry', error.stack);
+        throw error;
+      }),
+    );
+  }
+}
+
+======== File: C:\src\shared\logger\logger.service.ts ========
+import { Injectable, LoggerService } from '@nestjs/common';
+import * as winston from 'winston';
+
+@Injectable()
+export class CustomLogger implements LoggerService {
+  private logger: winston.Logger;
+
+  constructor() {
+    this.logger = winston.createLogger({
+      level: 'info',
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json(),
+      ),
+      transports: [
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'error.log', level: 'error' }),
+        new winston.transports.File({ filename: 'combined.log' }),
+      ],
+    });
+  }
+
+  log(message: string) {
+    this.logger.info(message);
+  }
+
+  error(message: string, trace: string) {
+    this.logger.error(message, { trace });
+  }
+
+  warn(message: string) {
+    this.logger.warn(message);
+  }
+
+  debug(message: string) {
+    this.logger.debug(message);
+  }
+
+  verbose(message: string) {
+    this.logger.verbose(message);
+  }
+}
+
+======== File: C:\src\shared\services\secret-manager.service.ts ========
+import { Injectable, Logger } from '@nestjs/common';
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from '@aws-sdk/client-secrets-manager';
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
+export class SecretManagerService {
+  private readonly logger = new Logger(SecretManagerService.name);
+  private client: SecretsManagerClient;
+
+  constructor(private readonly configService: ConfigService) {
+    // Initialize AWS Secrets Manager Client
+    this.client = new SecretsManagerClient({
+      region: this.configService.get<string>('AWS_REGION'),
+      credentials: {
+        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
+      },
+    });
+  }
+
+  async getSecret(secretName: string): Promise<string> {
+    try {
+      // Command to fetch the secret value
+      const command = new GetSecretValueCommand({ SecretId: secretName });
+      const response = await this.client.send(command);
+      
+      if ('SecretString' in response) {
+        return response.SecretString;
+      } else {
+        // Convert binary secret to a string
+        const buff = Buffer.from(response.SecretBinary as Uint8Array);
+        return buff.toString('ascii');
+      }
+    } catch (error) {
+      this.logger.error(`Failed to retrieve secret ${secretName}: ${error.message}`);
+      throw error;
+    }
+  }
+}
